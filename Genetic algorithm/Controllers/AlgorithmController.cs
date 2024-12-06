@@ -14,24 +14,39 @@ namespace AG.Controllers
             _algorithmService = algorithmService;
         }
 
+        // Widok początkowy, formularz do wprowadzenia danych
         public IActionResult Run()
         {
-            return View(new OptimizationParameters());
+            return View();
         }
 
+        // Metoda POST, która uruchamia algorytm
         [HttpPost]
-        public async Task<IActionResult> Run(OptimizationParameters parameters)
+        public async Task<IActionResult> Run(int optimizationType, int populationSize, int numberOfWorkers, int daysInWeek, double preferenceWeight)
         {
             if (!ModelState.IsValid)
             {
-                return View(parameters);
+                // Jeśli formularz jest niepoprawny, zwróć formularz z błędami
+                return View();
             }
 
             // Rozpoczęcie przetwarzania algorytmu
             ViewBag.Status = "Algorytm w trakcie przetwarzania...";
-            var result = await Task.Run(() => _algorithmService.RunAlgorithm(parameters));
 
-            // Przekazanie wyniku do widoku
+            // Przygotowanie parametrów optymalizacji
+            var parameters = new OptimizationParameters
+            {
+                OptimizationType = optimizationType,
+                PopulationSize = populationSize,
+                NumberOfWorkers = numberOfWorkers,
+                DaysInWeek = daysInWeek,
+                PreferenceWeight = preferenceWeight
+            };
+
+            // Przekazanie parametrów do algorytmu, z pominięciem preferencji
+            var result = await Task.Run(() => _algorithmService.RunAlgorithm(parameters, null));
+
+            // Przekazanie wyniku do widoku "Result"
             return View("Result", result);
         }
     }

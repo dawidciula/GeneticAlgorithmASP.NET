@@ -1,35 +1,36 @@
-@model AG.Models.OptimizationParameters
+@{
+    ViewData["Title"] = "Uruchom algorytm";
+}
 
-<h1>Uruchom Algorytm</h1>
+<h2>Uruchom algorytm</h2>
 
 <form asp-action="Run" method="post">
-    <div>
-        <label>Typ Optymalizacji</label>
-        <select asp-for="OptimizationType">
-            <option value="1">Ruletka</option>
-            <option value="2">Turniej</option>
-        </select>
-    </div>
-    <div>
-        <label>Rozmiar populacji</label>
-        <input asp-for="PopulationSize" />
-    </div>
-    <div>
-        <label>Liczba pracowników</label>
-        <input asp-for="NumberOfWorkers" />
-    </div>
-    <div>
-        <label>Liczba dni w tygodniu</label>
-        <input asp-for="DaysInWeek" />
-    </div>
-    <div>
-        <label>Waga preferencji</label>
-        <input asp-for="PreferenceWeight" />
-    </div>
-    <button type="submit">Uruchom</button>
-</form>
+    <fieldset>
+        <legend>Parametry optymalizacji</legend>
+        <div>
+            <label for="OptimizationType">Typ optymalizacji:</label>
+            <select id="OptimizationType" name="optimizationType" class="form-control">
+                <option value="1">Ruletka</option>
+                <option value="2">Turniej</option>
+            </select>
+        </div>
+        <div>
+            <label for="PopulationSize">Rozmiar populacji:</label>
+            <input type="number" name="populationSize" class="form-control" />
+        </div>
+        <div>
+            <label for="NumberOfWorkers">Liczba pracowników:</label>
+            <input type="number" name="numberOfWorkers" class="form-control" />
+        </div>
+        <div>
+            <label for="DaysInWeek">Liczba dni w tygodniu:</label>
+            <input type="number" name="daysInWeek" class="form-control" />
+        </div>
+        <div>
+            <label for="PreferenceWeight">Waga preferencji:</label>
+            <input type="number" step="0.01" name="preferenceWeight" class="form-control" />
+        </div>
+    </fieldset>
 
-@if (ViewBag.Status != null)
-{
-    <p>@ViewBag.Status</p>
-}
+    <button type="submit" class="btn btn-primary">Uruchom</button>
+</form>

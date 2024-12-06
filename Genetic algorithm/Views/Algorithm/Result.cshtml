@@ -1,21 +1,67 @@
 @model AG.Models.ScheduleResult
 
-<h1>Wynik Algorytmu</h1>
-
-@if (Model.BestSchedule != null)
-{
-    <h2>Najlepszy harmonogram:</h2>
-    <table>
-        @for (int i = 0; i < Model.BestSchedule.GetLength(0); i++)
-        {
-            <tr>
-                @for (int j = 0; j < Model.BestSchedule.GetLength(1); j++)
-                {
-                    <td>@Model.BestSchedule[i, j]</td>
-                }
-            </tr>
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wizualizacja Harmonogramu</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
         }
-    </table>
-}
-<p>Fitness: @Model.BestFitness</p>
-<a href="/Algorithm/Run">Uruchom ponownie</a>
+        td, th {
+            border: 1px solid #ddd;
+            text-align: center;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .shift-0 { background-color: #e0e0e0; } /* Dzień wolny */
+        .shift-1 { background-color: #add8e6; } /* Poranna zmiana */
+        .shift-2 { background-color: #f0e68c; } /* Popołudniowa zmiana */
+        .shift-3 { background-color: #ffa07a; } /* Nocna zmiana */
+    </style>
+</head>
+<body>
+<h1>Najlepszy Harmonogram</h1>
+
+<table>
+    <thead>
+    <tr>
+        <th>Pracownik</th>
+        <th>Pon</th>
+        <th>Wt</th>
+        <th>Śr</th>
+        <th>Czw</th>
+        <th>Pt</th>
+        <th>Sob</th>
+        <th>Nd</th>
+    </tr>
+    </thead>
+    <tbody>
+    @for (int i = 0; i < Model.BestSchedule.GetLength(0); i++)
+    {
+        <tr>
+            <td>Pracownik @i</td>
+            @for (int j = 0; j < Model.BestSchedule.GetLength(1); j++)
+            {
+                <td class="shift-@Model.BestSchedule[i, j]">
+                    @if (Model.BestSchedule[i, j] == 0)
+                    {
+                        @:Wolne
+                    }
+                    else
+                    {
+                        @:Zmiana @Model.BestSchedule[i, j]
+                    }
+                </td>
+            }
+        </tr>
+    }
+    </tbody>
+</table>
+</body>
+</html>

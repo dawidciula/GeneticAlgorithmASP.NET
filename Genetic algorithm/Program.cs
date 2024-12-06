@@ -4,6 +4,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+//Services
+builder.Services.AddScoped<FitnessService>();
+builder.Services.AddScoped<PopulationService>();
+builder.Services.AddScoped<CrossoverService>();
+builder.Services.AddScoped<MutationService>();
 builder.Services.AddScoped<AlgorithmService>();
 
 var app = builder.Build();
