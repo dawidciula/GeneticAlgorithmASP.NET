@@ -1,0 +1,35 @@
+@model AG.Models.OptimizationParameters
+
+<h1>Uruchom Algorytm</h1>
+
+<form asp-action="Run" method="post">
+    <div>
+        <label>Typ Optymalizacji</label>
+        <select asp-for="OptimizationType">
+            <option value="1">Ruletka</option>
+            <option value="2">Turniej</option>
+        </select>
+    </div>
+    <div>
+        <label>Rozmiar populacji</label>
+        <input asp-for="PopulationSize" />
+    </div>
+    <div>
+        <label>Liczba pracowników</label>
+        <input asp-for="NumberOfWorkers" />
+    </div>
+    <div>
+        <label>Liczba dni w tygodniu</label>
+        <input asp-for="DaysInWeek" />
+    </div>
+    <div>
+        <label>Waga preferencji</label>
+        <input asp-for="PreferenceWeight" />
+    </div>
+    <button type="submit">Uruchom</button>
+</form>
+
+@if (ViewBag.Status != null)
+{
+    <p>@ViewBag.Status</p>
+}

@@ -1,0 +1,21 @@
+@model AG.Models.ScheduleResult
+
+<h1>Wynik Algorytmu</h1>
+
+@if (Model.BestSchedule != null)
+{
+    <h2>Najlepszy harmonogram:</h2>
+    <table>
+        @for (int i = 0; i < Model.BestSchedule.GetLength(0); i++)
+        {
+            <tr>
+                @for (int j = 0; j < Model.BestSchedule.GetLength(1); j++)
+                {
+                    <td>@Model.BestSchedule[i, j]</td>
+                }
+            </tr>
+        }
+    </table>
+}
+<p>Fitness: @Model.BestFitness</p>
+<a href="/Algorithm/Run">Uruchom ponownie</a>
