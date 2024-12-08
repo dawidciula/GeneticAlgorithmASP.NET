@@ -1,9 +1,16 @@
+using AG.Models;
 using AG.Services;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+// Rejestracja DbContext z konfiguracją połączenia
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseInMemoryDatabase("OptimalizationParametersDB"));
+
 
 //Services
 builder.Services.AddScoped<FitnessService>();

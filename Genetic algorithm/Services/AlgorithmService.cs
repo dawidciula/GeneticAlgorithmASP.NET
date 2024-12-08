@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using AG.Models;
+using Genetic_algorithm.Models;
 
 namespace AG.Services
 {
@@ -28,16 +29,27 @@ namespace AG.Services
             _bestFitness = 0.0;
         }
 
-        public ScheduleResult RunAlgorithm(OptimizationParameters parameters, EmployeePreference employeePreference)
+        public ScheduleResult RunAlgorithm(OptimizationParameters optimizationParameters,ScheduleParameters scheduleParameters ,EmployeePreference employeePreference)
         {
-            int populationSize = parameters.PopulationSize;
-            int numberOfWorkers = parameters.NumberOfWorkers;
-            int daysInWeek = parameters.DaysInWeek;
-            double preferenceWeight = parameters.PreferenceWeight;
-            var optimizationType = (OptimizationType)parameters.OptimizationType;
-            double mutationFrequency = parameters.MutationFrequency;
-            int numberOfParents = parameters.NumberOfParents;
-            int eliteCount = (int)(parameters.PopulationSize * parameters.ElitePercentage);
+            int populationSize = optimizationParameters.PopulationSize;
+            int numberOfWorkers = scheduleParameters.NumberOfWorkers;
+            int daysInWeek = scheduleParameters.DaysInWeek;
+            double preferenceWeight = optimizationParameters.PreferenceWeight;
+            var optimizationType = (OptimizationType)optimizationParameters.OptimizationType;
+            double mutationFrequency = optimizationParameters.MutationFrequency;
+            int numberOfParents = optimizationParameters.NumberOfParents;
+            int eliteCount = (int)(optimizationParameters.PopulationSize * optimizationParameters.ElitePercentage);
+            
+            // Logowanie parametrów wejściowych
+            Console.WriteLine("Uruchomiono algorytm z następującymi parametrami:");
+            Console.WriteLine($"OptimizationType: {(OptimizationType)optimizationParameters.OptimizationType}");
+            Console.WriteLine($"PopulationSize: {optimizationParameters.PopulationSize}");
+            Console.WriteLine($"PreferenceWeight: {optimizationParameters.PreferenceWeight}");
+            Console.WriteLine($"MutationFrequency: {optimizationParameters.MutationFrequency}");
+            Console.WriteLine($"NumberOfParents: {optimizationParameters.NumberOfParents}");
+            Console.WriteLine($"ElitePercentage: {optimizationParameters.ElitePercentage}");
+            Console.WriteLine($"NumberOfWorkers: {scheduleParameters.NumberOfWorkers}");
+            Console.WriteLine($"DaysInWeek: {scheduleParameters.DaysInWeek}");
 
             
             var employeePreferences = new List<int[]>
@@ -56,13 +68,14 @@ namespace AG.Services
                 null
             };
 
+          
             var random = new Random();
             var population = _populationService.GenerateInitialPopulation(populationSize, numberOfWorkers, daysInWeek);
             
             int generationsWithoutImprovement = 0;
-            const int maxStagnation = 100;
+            const int maxStagnation = 200;
 
-            for (int generation = 0; generation < 1000; generation++)
+            for (int generation = 0; generation < 100000; generation++)
             {
                 // Obliczanie fitness
                 var fitness = population.Select(schedule =>
@@ -125,7 +138,7 @@ namespace AG.Services
                     sortedPopulation.Skip(eliteCount).Select(x => x.Fitness).ToArray(),
                     optimizationType,
                     random,
-                    generation / 100 + 2, // Liczba kandydatów zwiększana co 100 generacji
+                    numberOfParents,
                     mutationFrequency);
 
                 // Krzyżowanie

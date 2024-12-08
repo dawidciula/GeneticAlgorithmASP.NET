@@ -1,36 +1,104 @@
+@model Genetic_algorithm.Models.CombinedAlgorithmParameters
+
 @{
     ViewData["Title"] = "Uruchom algorytm";
 }
 
-<h2>Uruchom algorytm</h2>
+<!-- Kontener z tytułem i przyciskiem w tym samym wierszu -->
+<div class="d-flex justify-content-between align-items-center">
+    <h2>Uruchom algorytm</h2>
 
+    <!-- Przycisk do otwarcia okienka popup (w prawym górnym rogu) -->
+    <button class="btn btn-secondary" id="openModalButton">Ustawienia zaawansowane</button>
+</div>
+
+<!-- Formularz na głównej stronie -->
 <form asp-action="Run" method="post">
     <fieldset>
-        <legend>Parametry optymalizacji</legend>
-        <div>
-            <label for="OptimizationType">Typ optymalizacji:</label>
-            <select id="OptimizationType" name="optimizationType" class="form-control">
-                <option value="1">Ruletka</option>
-                <option value="2">Turniej</option>
-            </select>
-        </div>
-        <div>
-            <label for="PopulationSize">Rozmiar populacji:</label>
-            <input type="number" name="populationSize" class="form-control" />
-        </div>
-        <div>
-            <label for="NumberOfWorkers">Liczba pracowników:</label>
-            <input type="number" name="numberOfWorkers" class="form-control" />
-        </div>
-        <div>
-            <label for="DaysInWeek">Liczba dni w tygodniu:</label>
-            <input type="number" name="daysInWeek" class="form-control" />
-        </div>
-        <div>
-            <label for="PreferenceWeight">Waga preferencji:</label>
-            <input type="number" step="0.01" name="preferenceWeight" class="form-control" />
-        </div>
+        <legend>Parametry harmonogramu</legend>
+
+        @foreach (var schedule in Model.ScheduleParametersList)
+        {
+            <div>
+                <label for="ScheduleParametersList[@schedule.Id].NumberOfWorkers">Liczba pracowników:</label>
+                <input type="number" name="ScheduleParametersList[@schedule.Id].NumberOfWorkers" class="form-control" value="@schedule.NumberOfWorkers" />
+            </div>
+            <div>
+                <label for="ScheduleParametersList[@schedule.Id].DaysInWeek">Liczba dni w tygodniu:</label>
+                <input type="number" name="ScheduleParametersList[@schedule.Id].DaysInWeek" class="form-control" value="@schedule.DaysInWeek" />
+            </div>
+        }
     </fieldset>
 
     <button type="submit" class="btn btn-primary">Uruchom</button>
 </form>
+
+<!-- Okienko popup (Modal) z formularzem do ustawień algorytmu -->
+<div class="modal fade" id="algorithmSettingsModal" tabindex="-1" aria-labelledby="algorithmSettingsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="algorithmSettingsModalLabel">Parametry algorytmu</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Formularz w modalnym okienku -->
+                <form asp-action="SaveAlgorithmSettings" method="post">
+                    <fieldset>
+                        <legend>Parametry optymalizacji</legend>
+
+                        @foreach (var optimization in Model.OptimizationParametersList)
+                        {
+                            <div>
+                                <label for="OptimizationParametersList[@optimization.Id].OptimizationType">Typ optymalizacji:</label>
+                                <select name="OptimizationParametersList[@optimization.Id].OptimizationType" class="form-control">
+                                    <option value="1" selected="@((optimization.OptimizationType == 1) ? "selected" : "")">Ruletka</option>
+                                    <option value="2" selected="@((optimization.OptimizationType == 2) ? "selected" : "")">Turniej</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="OptimizationParametersList[@optimization.Id].PopulationSize">Rozmiar populacji:</label>
+                                <input type="number" name="OptimizationParametersList[@optimization.Id].PopulationSize" class="form-control" value="@optimization.PopulationSize" min="10" max="1000" />
+                            </div>
+
+                            <div>
+                                <label for="OptimizationParametersList[@optimization.Id].PreferenceWeight">Waga preferencji:</label>
+                                <input type="number" name="OptimizationParametersList[@optimization.Id].PreferenceWeight" class="form-control" value="@optimization.PreferenceWeight" min="0" max="1" step="0.01" />
+                            </div>
+
+                            <div>
+                                <label for="OptimizationParametersList[@optimization.Id].MutationFrequency">Częstotliwość mutacji:</label>
+                                <input type="number" name="OptimizationParametersList[@optimization.Id].MutationFrequency" class="form-control" value="@optimization.MutationFrequency" min="0" max="1" step="0.01" />
+                            </div>
+
+                            <div>
+                                <label for="OptimizationParametersList[@optimization.Id].NumberOfParents">Liczba rodziców:</label>
+                                <input type="number" name="OptimizationParametersList[@optimization.Id].NumberOfParents" class="form-control" value="@optimization.NumberOfParents" min="2" max="100" />
+                            </div>
+
+                            <div>
+                                <label for="OptimizationParametersList[@optimization.Id].ElitePercentage">Procent elitarnych osobników:</label>
+                                <input type="number" name="OptimizationParametersList[@optimization.Id].ElitePercentage" class="form-control" value="@optimization.ElitePercentage" min="0" max="1" step="0.01" />
+                            </div>
+                        }
+                    </fieldset>
+
+                    <button type="submit" class="btn btn-primary">Zapisz</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap 5 JS i Popper.js do działania okienka popup -->
+<script src="https://cdn.jsdelivr.net/npm/popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+
+<!-- Skrypt JavaScript do obsługi otwierania popupu -->
+<script>
+    var modal = new bootstrap.Modal(document.getElementById('algorithmSettingsModal'));
+    document.getElementById('openModalButton').addEventListener('click', function () {
+        modal.show();
+    });
+</script>
