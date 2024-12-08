@@ -35,6 +35,10 @@ namespace AG.Services
             int daysInWeek = parameters.DaysInWeek;
             double preferenceWeight = parameters.PreferenceWeight;
             var optimizationType = (OptimizationType)parameters.OptimizationType;
+            double mutationFrequency = parameters.MutationFrequency;
+            int numberOfParents = parameters.NumberOfParents;
+            int eliteCount = (int)(parameters.PopulationSize * parameters.ElitePercentage);
+
             
             var employeePreferences = new List<int[]>
             {
@@ -77,15 +81,32 @@ namespace AG.Services
                 {
                     break;
                 }
-
-                // Selekcja rodziców
-                var parents = SelectParents(population, fitness, optimizationType, random);
+                
+                // Sortowanie populacji według fitness (od najlepszego do najgorszego)
+                var sortedPopulation = population.Zip(fitness, (schedule, fit) => new { Schedule = schedule, Fitness = fit })
+                    .OrderByDescending(x => x.Fitness)
+                    .ToList();
+                
+                // Pobierz elitarne osobniki
+                var eliteIndividuals = sortedPopulation.Take(eliteCount).Select(x => x.Schedule).ToList();
+                
+                // Selekcja rodziców z reszty populacji
+                var parents = SelectParents(
+                    sortedPopulation.Skip(eliteCount).Select(x => x.Schedule).ToList(),
+                    sortedPopulation.Skip(eliteCount).Select(x => x.Fitness).ToArray(),
+                    optimizationType,
+                    random,
+                    numberOfParents,
+                    mutationFrequency);
 
                 // Krzyżowanie
                 var offspring = _crossoverService.PerformCrossover(parents, random, numberOfWorkers, daysInWeek);
 
                 // Mutacja
-                _mutationService.PerformMutation(offspring, random, numberOfWorkers, daysInWeek);
+                _mutationService.PerformMutation(offspring, random, numberOfWorkers, daysInWeek, mutationFrequency);
+                
+                // Dodaj elitarne osobniki do potomstwa
+                offspring.AddRange(eliteIndividuals);
 
                 // Aktualizacja populacji
                 population = offspring;
@@ -98,14 +119,27 @@ namespace AG.Services
             };
         }
 
-        private List<int[,]> SelectParents(List<int[,]> population, double[] fitness, OptimizationType optimizationType, Random random)
+        private List<int[,]> SelectParents(List<int[,]> population, double[] fitness, OptimizationType optimizationType, Random random, int numberOfParents, double mutationFrequency)
         {
             var parents = new List<int[,]>();
+            int populationSize = population.Count;
 
             if (optimizationType == OptimizationType.RouletteSelection)
             {
+                // Modyfikacja fitness dla ruletki
+                if (mutationFrequency > 0)
+                {
+                    double maxFitness = fitness.Max();
+                    double minFitness = fitness.Min();
+                    for (int i = 0; i < fitness.Length; i++)
+                    {
+                        fitness[i] = (fitness[i] - minFitness) / (maxFitness - minFitness);
+                    }
+                }
+
+                // Wypełnienie slotów
                 var slots = FillSlots(fitness);
-                for (int i = 0; i < population.Count; i++)
+                for (int i = 0; i < numberOfParents; i++)
                 {
                     double point = random.NextDouble() * fitness.Sum();
                     parents.Add(population[SearchSlot(slots, point)]);
@@ -113,16 +147,30 @@ namespace AG.Services
             }
             else if (optimizationType == OptimizationType.TournamentSelection)
             {
-                for (int i = 0; i < population.Count; i++)
+                // Selekcja turniejowa
+                for (int i = 0; i < numberOfParents; i++)
                 {
-                    int a = random.Next(population.Count);
-                    int b = random.Next(population.Count);
-                    parents.Add(fitness[a] > fitness[b] ? population[a] : population[b]);
+                    int bestIndex = -1;
+                    double bestFitness = double.MinValue;
+
+                    // Turniej z liczbą kandydatów = numberOfParents
+                    for (int j = 0; j < numberOfParents; j++)
+                    {
+                        int candidate = random.Next(populationSize);
+                        if (fitness[candidate] > bestFitness)
+                        {
+                            bestFitness = fitness[candidate];
+                            bestIndex = candidate;
+                        }
+                    }
+
+                    parents.Add(population[bestIndex]);
                 }
             }
 
             return parents;
         }
+
 
         private double[] FillSlots(double[] fitness)
         {
