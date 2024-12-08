@@ -88,7 +88,12 @@ namespace AG.Services
                     .ToList();
                 
                 // Pobierz elitarne osobniki
-                var eliteIndividuals = sortedPopulation.Take(eliteCount).Select(x => x.Schedule).ToList();
+                double fitnessThreshold = 0.8 * _bestFitness; // Próg fitness jako 80% najlepszego
+                var eliteIndividuals = sortedPopulation
+                    .Where(x => x.Fitness >= fitnessThreshold)
+                    .Select(x => x.Schedule)
+                    .ToList();
+
                 
                 // Selekcja rodziców z reszty populacji
                 var parents = SelectParents(
@@ -96,7 +101,7 @@ namespace AG.Services
                     sortedPopulation.Skip(eliteCount).Select(x => x.Fitness).ToArray(),
                     optimizationType,
                     random,
-                    numberOfParents,
+                    generation / 100 + 2, // Liczba kandydatów zwiększana co 100 generacji
                     mutationFrequency);
 
                 // Krzyżowanie
@@ -122,22 +127,21 @@ namespace AG.Services
         private List<int[,]> SelectParents(List<int[,]> population, double[] fitness, OptimizationType optimizationType, Random random, int numberOfParents, double mutationFrequency)
         {
             var parents = new List<int[,]>();
-            int populationSize = population.Count;
 
             if (optimizationType == OptimizationType.RouletteSelection)
             {
-                // Modyfikacja fitness dla ruletki
-                if (mutationFrequency > 0)
+                double maxFitness = fitness.Max();
+                double minFitness = fitness.Min();
+                double threshold = maxFitness * 0.1; // Próg skalowania
+
+                for (int i = 0; i < fitness.Length; i++)
                 {
-                    double maxFitness = fitness.Max();
-                    double minFitness = fitness.Min();
-                    for (int i = 0; i < fitness.Length; i++)
-                    {
-                        fitness[i] = (fitness[i] - minFitness) / (maxFitness - minFitness);
-                    }
+                    if (fitness[i] > threshold)
+                        fitness[i] = (fitness[i] - threshold) / (maxFitness - threshold);
+                    else
+                        fitness[i] = 0; // Ucinanie niskich wartości fitness
                 }
 
-                // Wypełnienie slotów
                 var slots = FillSlots(fitness);
                 for (int i = 0; i < numberOfParents; i++)
                 {
@@ -147,16 +151,16 @@ namespace AG.Services
             }
             else if (optimizationType == OptimizationType.TournamentSelection)
             {
-                // Selekcja turniejowa
+                int tournamentSize = Math.Max(2, numberOfParents); // Domyślny rozmiar turnieju
+
                 for (int i = 0; i < numberOfParents; i++)
                 {
                     int bestIndex = -1;
                     double bestFitness = double.MinValue;
 
-                    // Turniej z liczbą kandydatów = numberOfParents
-                    for (int j = 0; j < numberOfParents; j++)
+                    for (int j = 0; j < tournamentSize; j++)
                     {
-                        int candidate = random.Next(populationSize);
+                        int candidate = random.Next(population.Count);
                         if (fitness[candidate] > bestFitness)
                         {
                             bestFitness = fitness[candidate];
@@ -170,6 +174,7 @@ namespace AG.Services
 
             return parents;
         }
+
 
 
         private double[] FillSlots(double[] fitness)
