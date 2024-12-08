@@ -59,12 +59,36 @@ namespace AG.Services
             var random = new Random();
             var population = _populationService.GenerateInitialPopulation(populationSize, numberOfWorkers, daysInWeek);
             
+            int generationsWithoutImprovement = 0;
+            const int maxStagnation = 100;
 
             for (int generation = 0; generation < 1000; generation++)
             {
                 // Obliczanie fitness
                 var fitness = population.Select(schedule =>
                     _fitnessService.CalculateFitness(schedule, employeePreferences, preferenceWeight)).ToArray();
+                
+                // Znajdź maksymalny fitness w obecnej generacji
+                double currentBestFitness = fitness.Max();
+                
+                // Jeśli nowy maksymalny fitness jest lepszy niż dotychczasowy
+                if (currentBestFitness > _bestFitness)
+                {
+                    _bestFitness = currentBestFitness;
+                    _bestSchedule = population[Array.IndexOf(fitness, currentBestFitness)];
+                    generationsWithoutImprovement = 0; // Reset stagnacji
+                }
+                else
+                {
+                    generationsWithoutImprovement++; // Zwiększ licznik stagnacji
+                }
+                
+                // Sprawdź warunek stagnacji
+                if (generationsWithoutImprovement >= maxStagnation)
+                {
+                    Console.WriteLine($"Algorytm zatrzymany z powodu stagnacji po {generation} generacjach.");
+                    break;
+                }
 
                 // Aktualizacja najlepszego wyniku
                 for (int i = 0; i < fitness.Length; i++)
@@ -77,7 +101,7 @@ namespace AG.Services
                 }
 
                 // Jeśli znaleziono maksymalny fitness, zakończ pętlę
-                if (_bestFitness >= 1.0)
+                if (_bestFitness >= 1000.0)
                 {
                     break;
                 }
