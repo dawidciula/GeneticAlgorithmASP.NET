@@ -73,7 +73,7 @@ namespace AG.Services
             var population = _populationService.GenerateInitialPopulation(populationSize, numberOfWorkers, daysInWeek);
             
             int generationsWithoutImprovement = 0;
-            const int maxStagnation = 200;
+            const int maxStagnation = 500;
 
             for (int generation = 0; generation < 100000; generation++)
             {

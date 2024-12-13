@@ -1,65 +1,102 @@
 using Microsoft.AspNetCore.Mvc;
 using AG.Models;
 using AG.Services;
-using System.Threading.Tasks;
 using Genetic_algorithm.Models;
-using Microsoft.EntityFrameworkCore;
+using Genetic_algorithm.Repository;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace AG.Controllers
 {
     public class AlgorithmController : Controller
     {
         private readonly AlgorithmService _algorithmService;
-        private readonly ApplicationDbContext _context;
+        private readonly IRepository _repository;
 
-        public AlgorithmController(AlgorithmService algorithmService, ApplicationDbContext context)
+        public AlgorithmController(AlgorithmService algorithmService, IRepository repository)
         {
             _algorithmService = algorithmService;
-            _context = context;
+            _repository = repository;
         }
 
         // Widok początkowy, formularz do wprowadzenia danych
-        public IActionResult Run()
+        public async Task<IActionResult> Run()
         {
+            // Pobierz zapisane parametry optymalizacji z repozytorium
+            var optimizationParameters = await _repository.GetOptimizationParameterByIdAsync(1); // Zawsze ID = 1
+
             var model = new CombinedAlgorithmParameters
             {
-                // Inicjujemy puste listy dla formularzy
-                OptimizationParametersList = new List<OptimizationParameters> { new OptimizationParameters() },
-                ScheduleParametersList = new List<ScheduleParameters> { new ScheduleParameters() }
+                OptimizationParametersList = optimizationParameters != null
+                    ? new List<OptimizationParameters> { optimizationParameters }
+                    : new List<OptimizationParameters> { new OptimizationParameters() },
+                ScheduleParametersList = new List<ScheduleParameters> { new ScheduleParameters() } // ScheduleParameters nie są zapisywane w bazie
             };
 
             return View(model);
         }
 
-        // Metoda POST, która zapisuje parametry algorytmu w bazie danych
+        // Metoda POST, która dodaje lub aktualizuje parametry optymalizacji w bazie
         [HttpPost]
         public async Task<IActionResult> SaveAlgorithmSettings(CombinedAlgorithmParameters model)
         {
             if (!ModelState.IsValid)
             {
-                // Jeśli formularz zawiera błędy, zwróć go z powrotem do widoku
                 return View("Run", model);
             }
 
-            // Zapisz dane optymalizacji w bazie danych (tylko parametry z listy OptimizationParametersList)
-            foreach (var optimizationParameters in model.OptimizationParametersList)
+            // Pobierz istniejący rekord z ID = 1
+            var existingParameters = await _repository.GetOptimizationParameterByIdAsync(1);
+
+            // Logowanie danych wejściowych z formularza
+            Console.WriteLine("Dane przesłane z formularza:");
+            foreach (var param in model.OptimizationParametersList)
             {
-                _context.OptimizationParameters.Add(optimizationParameters);
+                Console.WriteLine($"OptimizationType={param.OptimizationType}, PopulationSize={param.PopulationSize}, PreferenceWeight={param.PreferenceWeight}, MutationFrequency={param.MutationFrequency}, NumberOfParents={param.NumberOfParents}, ElitePercentage={param.ElitePercentage}");
             }
 
-            // Zapisujemy zmiany w bazie danych
-            await _context.SaveChangesAsync();
-
-            // Logowanie zapisanych danych (opcjonalne)
-            var savedOptimizationParameters = await _context.OptimizationParameters.ToListAsync();
-            foreach (var param in savedOptimizationParameters)
+            // Jeśli rekord istnieje, zaktualizuj dane
+            if (existingParameters != null)
             {
-                Console.WriteLine($"Zapisane parametry: OptimizationType={param.OptimizationType}, " +
-                                  $"PopulationSize={param.PopulationSize}, " +
-                                  $"PreferenceWeight={param.PreferenceWeight}, " +
-                                  $"MutationFrequency={param.MutationFrequency}, " +
-                                  $"NumberOfParents={param.NumberOfParents}, " +
-                                  $"ElitePercentage={param.ElitePercentage}");
+                var updatedParameters = model.OptimizationParametersList.FirstOrDefault();
+                if (updatedParameters != null)
+                {
+                    existingParameters.OptimizationType = updatedParameters.OptimizationType;
+                    existingParameters.PopulationSize = updatedParameters.PopulationSize;
+                    existingParameters.PreferenceWeight = updatedParameters.PreferenceWeight;
+                    existingParameters.MutationFrequency = updatedParameters.MutationFrequency;
+                    existingParameters.NumberOfParents = updatedParameters.NumberOfParents;
+                    existingParameters.ElitePercentage = updatedParameters.ElitePercentage;
+
+                    // Aktualizacja w repozytorium
+                    await _repository.UpdateOptimizationParameterAsync(existingParameters);
+
+                    // Logowanie po aktualizacji
+                    Console.WriteLine("Zaktualizowano parametry:");
+                    Console.WriteLine($"OptimizationType={existingParameters.OptimizationType}, PopulationSize={existingParameters.PopulationSize}, PreferenceWeight={existingParameters.PreferenceWeight}, MutationFrequency={existingParameters.MutationFrequency}, NumberOfParents={existingParameters.NumberOfParents}, ElitePercentage={existingParameters.ElitePercentage}");
+                }
+            }
+            else
+            {
+                // Jeśli rekord nie istnieje, dodaj nowy
+                var newParameters = model.OptimizationParametersList.FirstOrDefault() ?? new OptimizationParameters
+                {
+                    Id = 1, // Ustaw ID na 1
+                    OptimizationType = OptimizationType.Roulette,
+                    PopulationSize = 100,
+                    PreferenceWeight = 0.5,
+                    MutationFrequency = 0.1,
+                    NumberOfParents = 2,
+                    ElitePercentage = 0.1
+                };
+
+                await _repository.AddOptimizationParameterAsync(newParameters);
+
+                // Logowanie po dodaniu nowych danych
+                Console.WriteLine("Dodano nowe parametry:");
+                Console.WriteLine($"OptimizationType={newParameters.OptimizationType}, PopulationSize={newParameters.PopulationSize}, PreferenceWeight={newParameters.PreferenceWeight}, MutationFrequency={newParameters.MutationFrequency}, NumberOfParents={newParameters.NumberOfParents}, ElitePercentage={newParameters.ElitePercentage}");
             }
 
             // Przekierowanie na stronę główną
@@ -67,43 +104,42 @@ namespace AG.Controllers
             return RedirectToAction("Run");
         }
 
-
-
         // Metoda POST, która uruchamia algorytm
         [HttpPost]
         public async Task<IActionResult> Run(CombinedAlgorithmParameters model)
         {
             if (!ModelState.IsValid)
             {
-                return View();  // Jeśli formularz jest niepoprawny, zwróć formularz z błędami
+                return View(); // Jeśli formularz jest niepoprawny, zwróć formularz z błędami
             }
 
-            // Rozpoczęcie przetwarzania algorytmu
             ViewBag.Status = "Algorytm w trakcie przetwarzania...";
 
-            // Przygotowanie parametrów optymalizacji z bazy danych (jeśli zostały zapisane)
-            var optimizationParameters = await _context.OptimizationParameters.FirstOrDefaultAsync();
+            // Pobierz parametry optymalizacji z repozytorium
+            var optimizationParameters = await _repository.GetOptimizationParameterByIdAsync(1);
 
+            // Jeśli brak zapisanych parametrów, ustaw domyślne wartości
             if (optimizationParameters == null)
             {
                 optimizationParameters = new OptimizationParameters
                 {
-                    OptimizationType = model.OptimizationParametersList.FirstOrDefault()?.OptimizationType ?? 1,
-                    PopulationSize = model.OptimizationParametersList.FirstOrDefault()?.PopulationSize ?? 100,
-                    PreferenceWeight = model.OptimizationParametersList.FirstOrDefault()?.PreferenceWeight ?? 0.5,
-                    MutationFrequency = model.OptimizationParametersList.FirstOrDefault()?.MutationFrequency ?? 0.1,
-                    NumberOfParents = model.OptimizationParametersList.FirstOrDefault()?.NumberOfParents ?? 2,
-                    ElitePercentage = model.OptimizationParametersList.FirstOrDefault()?.ElitePercentage ?? 0.1
+                    OptimizationType = OptimizationType.Roulette,
+                    PopulationSize = 100,
+                    PreferenceWeight = 0.5,
+                    MutationFrequency = 0.1,
+                    NumberOfParents = 2,
+                    ElitePercentage = 0.1
                 };
             }
 
-            // Przygotowanie parametrów harmonogramu z formularza
+            // Parametry harmonogramu z formularza (nie zapisywane w bazie)
             var scheduleParameters = model.ScheduleParametersList.FirstOrDefault() ?? new ScheduleParameters();
 
             // Przekazanie parametrów do algorytmu
-            var result = await Task.Run(() => _algorithmService.RunAlgorithm(optimizationParameters, scheduleParameters, employeePreference: null));
+            var result = await Task.Run(() =>
+                _algorithmService.RunAlgorithm(optimizationParameters, scheduleParameters, employeePreference: null));
 
-            // Przekazanie wyniku do widoku "Result"
+            // Zwracanie wyniku do widoku "Result"
             return View("Result", result);
         }
     }

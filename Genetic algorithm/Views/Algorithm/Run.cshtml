@@ -1,3 +1,4 @@
+@using AG.Models
 @model Genetic_algorithm.Models.CombinedAlgorithmParameters
 
 @{
@@ -17,15 +18,25 @@
     <fieldset>
         <legend>Parametry harmonogramu</legend>
 
-        @foreach (var schedule in Model.ScheduleParametersList)
+        @for (int i = 0; i < Model.ScheduleParametersList.Count; i++)
         {
             <div>
-                <label for="ScheduleParametersList[@schedule.Id].NumberOfWorkers">Liczba pracowników:</label>
-                <input type="number" name="ScheduleParametersList[@schedule.Id].NumberOfWorkers" class="form-control" value="@schedule.NumberOfWorkers" />
+                <label for="ScheduleParametersList[@i].WorkRegime">System pracy:</label>
+                <select name="ScheduleParametersList[@i].WorkRegime" class="form-control">
+                    <option value="1" selected="@(Model.ScheduleParametersList[i].WorkRegime == WorkRegime.FlexibleWorkTime ? "selected" : "")">Elastyczny czas pracy</option>
+                </select>
             </div>
             <div>
-                <label for="ScheduleParametersList[@schedule.Id].DaysInWeek">Liczba dni w tygodniu:</label>
-                <input type="number" name="ScheduleParametersList[@schedule.Id].DaysInWeek" class="form-control" value="@schedule.DaysInWeek" />
+                <label for="ScheduleParametersList[@i].NumberOfWorkers">Liczba pracowników:</label>
+                <input type="number" name="ScheduleParametersList[@i].NumberOfWorkers" class="form-control" value="@Model.ScheduleParametersList[i].NumberOfWorkers" />
+            </div>
+            <div>
+                <label for="ScheduleParametersList[@i].DaysInWeek">Liczba dni w tygodniu:</label>
+                <input type="number" name="ScheduleParametersList[@i].DaysInWeek" class="form-control" value="@Model.ScheduleParametersList[i].DaysInWeek" />
+            </div>
+            <div>
+                <label for="ScheduleParametersList[@i].NumberofWeeks">Ilość tygodni:</label>
+                <input type="number" name="ScheduleParametersList[@i].NumberOfWeeks" class="form-control" value="@Model.ScheduleParametersList[i].NumberOfWeeks" />
             </div>
         }
     </fieldset>
@@ -47,39 +58,38 @@
                     <fieldset>
                         <legend>Parametry optymalizacji</legend>
 
-                        @foreach (var optimization in Model.OptimizationParametersList)
+                        @for (int i = 0; i < Model.OptimizationParametersList.Count; i++)
                         {
                             <div>
-                                <label for="OptimizationParametersList[@optimization.Id].OptimizationType">Typ optymalizacji:</label>
-                                <select name="OptimizationParametersList[@optimization.Id].OptimizationType" class="form-control">
-                                    <option value="1" selected="@((optimization.OptimizationType == 1) ? "selected" : "")">Ruletka</option>
-                                    <option value="2" selected="@((optimization.OptimizationType == 2) ? "selected" : "")">Turniej</option>
+                                <label for="OptimizationParametersList[@i].OptimizationType">Typ optymalizacji:</label>
+                                <select name="OptimizationParametersList[@i].OptimizationType" class="form-control">
+                                  <option value="1" selected="@(Model.OptimizationParametersList[i].OptimizationType == OptimizationType.Roulette ? "selected" : "")">Ruletka</option>
+                                  <option value="2" selected="@(Model.OptimizationParametersList[i].OptimizationType == OptimizationType.Tournament ? "selected" : "")">Turniej</option>
                                 </select>
                             </div>
-
                             <div>
-                                <label for="OptimizationParametersList[@optimization.Id].PopulationSize">Rozmiar populacji:</label>
-                                <input type="number" name="OptimizationParametersList[@optimization.Id].PopulationSize" class="form-control" value="@optimization.PopulationSize" min="10" max="1000" />
+                                <label for="OptimizationParametersList[@i].PopulationSize">Rozmiar populacji:</label>
+                                <input type="number" name="OptimizationParametersList[@i].PopulationSize" class="form-control" value="@Model.OptimizationParametersList[i].PopulationSize" min="10" max="1000" />
                             </div>
 
                             <div>
-                                <label for="OptimizationParametersList[@optimization.Id].PreferenceWeight">Waga preferencji:</label>
-                                <input type="number" name="OptimizationParametersList[@optimization.Id].PreferenceWeight" class="form-control" value="@optimization.PreferenceWeight" min="0" max="1" step="0.01" />
+                                <label for="OptimizationParametersList[@i].PreferenceWeight">Waga preferencji:</label>
+                                <input type="number" name="OptimizationParametersList[@i].PreferenceWeight" class="form-control" value="@Model.OptimizationParametersList[i].PreferenceWeight" min="0" max="1" step="0.01" />
                             </div>
 
                             <div>
-                                <label for="OptimizationParametersList[@optimization.Id].MutationFrequency">Częstotliwość mutacji:</label>
-                                <input type="number" name="OptimizationParametersList[@optimization.Id].MutationFrequency" class="form-control" value="@optimization.MutationFrequency" min="0" max="1" step="0.01" />
+                                <label for="OptimizationParametersList[@i].MutationFrequency">Częstotliwość mutacji:</label>
+                                <input type="number" name="OptimizationParametersList[@i].MutationFrequency" class="form-control" value="@Model.OptimizationParametersList[i].MutationFrequency" min="0" max="1" step="0.01" />
                             </div>
 
                             <div>
-                                <label for="OptimizationParametersList[@optimization.Id].NumberOfParents">Liczba rodziców:</label>
-                                <input type="number" name="OptimizationParametersList[@optimization.Id].NumberOfParents" class="form-control" value="@optimization.NumberOfParents" min="2" max="100" />
+                                <label for="OptimizationParametersList[@i].NumberOfParents">Liczba rodziców:</label>
+                                <input type="number" name="OptimizationParametersList[@i].NumberOfParents" class="form-control" value="@Model.OptimizationParametersList[i].NumberOfParents" min="2" max="100" />
                             </div>
 
                             <div>
-                                <label for="OptimizationParametersList[@optimization.Id].ElitePercentage">Procent elitarnych osobników:</label>
-                                <input type="number" name="OptimizationParametersList[@optimization.Id].ElitePercentage" class="form-control" value="@optimization.ElitePercentage" min="0" max="1" step="0.01" />
+                                <label for="OptimizationParametersList[@i].ElitePercentage">Procent elitarnych osobników:</label>
+                                <input type="number" name="OptimizationParametersList[@i].ElitePercentage" class="form-control" value="@Model.OptimizationParametersList[i].ElitePercentage" min="0" max="1" step="0.01" />
                             </div>
                         }
                     </fieldset>

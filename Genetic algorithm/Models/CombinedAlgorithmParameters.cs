@@ -4,6 +4,6 @@ namespace Genetic_algorithm.Models;
 
 public class CombinedAlgorithmParameters
 {
-    public IEnumerable<OptimizationParameters> OptimizationParametersList { get; set; } = new List<OptimizationParameters>();
-    public IEnumerable<ScheduleParameters> ScheduleParametersList { get; set; } = new List<ScheduleParameters>();
+    public List<OptimizationParameters> OptimizationParametersList { get; set; } = new List<OptimizationParameters>();
+    public List<ScheduleParameters> ScheduleParametersList { get; set; } = new List<ScheduleParameters>();
 }

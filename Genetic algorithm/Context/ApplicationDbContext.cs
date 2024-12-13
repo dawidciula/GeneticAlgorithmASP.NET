@@ -1,3 +1,4 @@
+using Genetic_algorithm.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace AG.Models
@@ -8,9 +9,7 @@ namespace AG.Models
         {
         }
 
-        // DbSet dla OptimizationParameters
         public DbSet<OptimizationParameters> OptimizationParameters { get; set; }
-
        
     }
 }
