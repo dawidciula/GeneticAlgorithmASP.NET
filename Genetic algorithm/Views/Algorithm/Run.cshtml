@@ -21,9 +21,10 @@
         @for (int i = 0; i < Model.ScheduleParametersList.Count; i++)
         {
             <div>
-                <label for="ScheduleParametersList[@i].WorkRegime">System pracy:</label>
+                <label for="ScheduleParametersList[@i].WorkRegime">Typ optymalizacji:</label>
                 <select name="ScheduleParametersList[@i].WorkRegime" class="form-control">
-                    <option value="1" selected="@(Model.ScheduleParametersList[i].WorkRegime == WorkRegime.FlexibleWorkTime ? "selected" : "")">Elastyczny czas pracy</option>
+                    <!option value="1" @(Model.ScheduleParametersList[i].WorkRegime == WorkRegime.FlexibleWorkTime ? "selected" : "")>Elastyczny czas pracy</!option>
+                    <!option value="2" @(Model.ScheduleParametersList[i].WorkRegime == WorkRegime.Fourbrigade ? "selected" : "")>Czterobrygadówka</!option>
                 </select>
             </div>
             <div>
@@ -31,8 +32,8 @@
                 <input type="number" name="ScheduleParametersList[@i].NumberOfWorkers" class="form-control" value="@Model.ScheduleParametersList[i].NumberOfWorkers" />
             </div>
             <div>
-                <label for="ScheduleParametersList[@i].DaysInWeek">Liczba dni w tygodniu:</label>
-                <input type="number" name="ScheduleParametersList[@i].DaysInWeek" class="form-control" value="@Model.ScheduleParametersList[i].DaysInWeek" />
+                <label for="ScheduleParametersList[@i].DaysInWeek">Liczba dni:</label>
+                <input type="number" name="ScheduleParametersList[@i].DaysInWeek" class="form-control" value="7" readonly />
             </div>
             <div>
                 <label for="ScheduleParametersList[@i].NumberofWeeks">Ilość tygodni:</label>
@@ -63,8 +64,8 @@
                             <div>
                                 <label for="OptimizationParametersList[@i].OptimizationType">Typ optymalizacji:</label>
                                 <select name="OptimizationParametersList[@i].OptimizationType" class="form-control">
-                                  <option value="1" selected="@(Model.OptimizationParametersList[i].OptimizationType == OptimizationType.Roulette ? "selected" : "")">Ruletka</option>
-                                  <option value="2" selected="@(Model.OptimizationParametersList[i].OptimizationType == OptimizationType.Tournament ? "selected" : "")">Turniej</option>
+                                    <!option value="1" @(Model.OptimizationParametersList[i].OptimizationType == OptimizationType.Roulette ? "selected" : "")>Ruletka</!option>
+                                    <!option value="2" @(Model.OptimizationParametersList[i].OptimizationType == OptimizationType.Tournament ? "selected" : "")>Turniej</!option>
                                 </select>
                             </div>
                             <div>

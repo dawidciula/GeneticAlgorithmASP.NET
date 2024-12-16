@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
+using Genetic_algorithm.Interfaces;
 
 namespace AG.Services
 {
-    public class PopulationService
+    public class FlexibleWorkTimePopulation : IPopulationService
     {
         public List<int[,]> GenerateInitialPopulation(int populationSize, int workers, int days)
         {

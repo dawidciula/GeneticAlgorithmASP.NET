@@ -14,11 +14,16 @@ namespace AG.Controllers
     {
         private readonly AlgorithmService _algorithmService;
         private readonly IRepository _repository;
+        private readonly FlexibleWorkTimePopulation _flexibleWorkTimePopulation;
+        private readonly FourbrigadePopulation _fourBrigadePopulation;
 
-        public AlgorithmController(AlgorithmService algorithmService, IRepository repository)
+        public AlgorithmController(AlgorithmService algorithmService, IRepository repository,
+            FlexibleWorkTimePopulation flexibleWorkTimePopulation, FourbrigadePopulation fourBrigadePopulation)
         {
             _algorithmService = algorithmService;
             _repository = repository;
+            _flexibleWorkTimePopulation = flexibleWorkTimePopulation;
+            _fourBrigadePopulation = fourBrigadePopulation;
         }
 
         // Widok początkowy, formularz do wprowadzenia danych
@@ -32,7 +37,7 @@ namespace AG.Controllers
                 OptimizationParametersList = optimizationParameters != null
                     ? new List<OptimizationParameters> { optimizationParameters }
                     : new List<OptimizationParameters> { new OptimizationParameters() },
-                ScheduleParametersList = new List<ScheduleParameters> { new ScheduleParameters() } // ScheduleParameters nie są zapisywane w bazie
+                ScheduleParametersList = new List<ScheduleParameters> { new ScheduleParameters() }, // ScheduleParameters nie są zapisywane w bazie
             };
 
             return View(model);
@@ -134,10 +139,33 @@ namespace AG.Controllers
 
             // Parametry harmonogramu z formularza (nie zapisywane w bazie)
             var scheduleParameters = model.ScheduleParametersList.FirstOrDefault() ?? new ScheduleParameters();
+            
+
+            // Generowanie populacji na podstawie wybranego WorkRegime
+            List<int[,]> population;
+            switch (scheduleParameters.WorkRegime)
+            {
+                case WorkRegime.FlexibleWorkTime:
+                    population = _flexibleWorkTimePopulation.GenerateInitialPopulation(
+                        optimizationParameters.PopulationSize,
+                        scheduleParameters.NumberOfWorkers,
+                        scheduleParameters.DaysInWeek);
+                    break;
+
+                case WorkRegime.Fourbrigade:
+                    population = _fourBrigadePopulation.GenerateInitialPopulation(
+                        optimizationParameters.PopulationSize,
+                        scheduleParameters.NumberOfWorkers,
+                        scheduleParameters.DaysInWeek);
+                    break;
+
+                default:
+                    throw new InvalidOperationException("Nieobsługiwany tryb pracy.");
+            }
 
             // Przekazanie parametrów do algorytmu
             var result = await Task.Run(() =>
-                _algorithmService.RunAlgorithm(optimizationParameters, scheduleParameters, employeePreference: null));
+                _algorithmService.RunAlgorithm(optimizationParameters, scheduleParameters, scheduleParameters.WorkRegime, employeePreference: null));
 
             // Zwracanie wyniku do widoku "Result"
             return View("Result", result);

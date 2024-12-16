@@ -2,7 +2,6 @@ using AG.Models;
 using AG.Services;
 using Genetic_algorithm.Repository;
 using Microsoft.EntityFrameworkCore;
-using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,7 +21,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 //Services
 builder.Services.AddScoped<FitnessService>();
-builder.Services.AddScoped<PopulationService>();
+builder.Services.AddScoped<FlexibleWorkTimePopulation>();
+builder.Services.AddScoped<FourbrigadePopulation>();
 builder.Services.AddScoped<CrossoverService>();
 builder.Services.AddScoped<MutationService>();
 builder.Services.AddScoped<AlgorithmService>();

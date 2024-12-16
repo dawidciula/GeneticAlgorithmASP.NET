@@ -2,8 +2,8 @@ namespace Genetic_algorithm.Models;
 
 public enum WorkRegime
 {
-    Fourbrigade,
-    FlexibleWorkTime
+    FlexibleWorkTime = 1,
+    Fourbrigade = 2,
 }
 
 public class ScheduleParameters

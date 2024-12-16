@@ -9,7 +9,8 @@ namespace AG.Services
     public class AlgorithmService
     {
         private readonly FitnessService _fitnessService;
-        private readonly PopulationService _populationService;
+        private readonly FlexibleWorkTimePopulation _flexibleWorkTimePopulation;
+        private readonly FourbrigadePopulation _fourBrigadePopulation;
         private readonly CrossoverService _crossoverService;
         private readonly MutationService _mutationService;
 
@@ -18,18 +19,21 @@ namespace AG.Services
 
         public AlgorithmService(
             FitnessService fitnessService,
-            PopulationService populationService,
+            FlexibleWorkTimePopulation flexibleWorkTimePopulation,
+            FourbrigadePopulation fourBrigadePopulation,
             CrossoverService crossoverService,
             MutationService mutationService)
         {
             _fitnessService = fitnessService;
-            _populationService = populationService;
+            _flexibleWorkTimePopulation = flexibleWorkTimePopulation;
+            _fourBrigadePopulation = fourBrigadePopulation;
             _crossoverService = crossoverService;
             _mutationService = mutationService;
             _bestFitness = 0.0;
         }
 
-        public ScheduleResult RunAlgorithm(OptimizationParameters optimizationParameters,ScheduleParameters scheduleParameters ,EmployeePreference employeePreference)
+
+        public ScheduleResult RunAlgorithm(OptimizationParameters optimizationParameters,ScheduleParameters scheduleParameters , WorkRegime workRegime, EmployeePreference employeePreference)
         {
             int populationSize = optimizationParameters.PopulationSize;
             int numberOfWorkers = scheduleParameters.NumberOfWorkers;
@@ -39,17 +43,18 @@ namespace AG.Services
             double mutationFrequency = optimizationParameters.MutationFrequency;
             int numberOfParents = optimizationParameters.NumberOfParents;
             int eliteCount = (int)(optimizationParameters.PopulationSize * optimizationParameters.ElitePercentage);
-            
-            // Logowanie parametrów wejściowych
+
             Console.WriteLine("Uruchomiono algorytm z następującymi parametrami:");
-            Console.WriteLine($"OptimizationType: {(OptimizationType)optimizationParameters.OptimizationType}");
-            Console.WriteLine($"PopulationSize: {optimizationParameters.PopulationSize}");
-            Console.WriteLine($"PreferenceWeight: {optimizationParameters.PreferenceWeight}");
-            Console.WriteLine($"MutationFrequency: {optimizationParameters.MutationFrequency}");
-            Console.WriteLine($"NumberOfParents: {optimizationParameters.NumberOfParents}");
+            Console.WriteLine($"OptimizationType: {optimizationType}");
+            Console.WriteLine($"PopulationSize: {populationSize}");
+            Console.WriteLine($"PreferenceWeight: {preferenceWeight}");
+            Console.WriteLine($"MutationFrequency: {mutationFrequency}");
+            Console.WriteLine($"NumberOfParents: {numberOfParents}");
             Console.WriteLine($"ElitePercentage: {optimizationParameters.ElitePercentage}");
-            Console.WriteLine($"NumberOfWorkers: {scheduleParameters.NumberOfWorkers}");
-            Console.WriteLine($"DaysInWeek: {scheduleParameters.DaysInWeek}");
+            Console.WriteLine($"NumberOfWorkers: {numberOfWorkers}");
+            Console.WriteLine($"DaysInWeek: {daysInWeek}");
+            Console.WriteLine($"WorkRegime: {workRegime}");
+
 
             
             var employeePreferences = new List<int[]>
@@ -70,8 +75,21 @@ namespace AG.Services
 
           
             var random = new Random();
-            var population = _populationService.GenerateInitialPopulation(populationSize, numberOfWorkers, daysInWeek);
-            
+            // Wybór populacji na podstawie WorkRegime
+            List<int[,]> population;
+            if (workRegime == WorkRegime.FlexibleWorkTime)
+            {
+                population = _flexibleWorkTimePopulation.GenerateInitialPopulation(populationSize, numberOfWorkers, daysInWeek);
+            }
+            else if (workRegime == WorkRegime.Fourbrigade)
+            {
+                population = _fourBrigadePopulation.GenerateInitialPopulation(populationSize, numberOfWorkers, daysInWeek);
+            }
+            else
+            {
+                throw new ArgumentException("Nieznany tryb pracy populacji.");
+            }
+
             int generationsWithoutImprovement = 0;
             const int maxStagnation = 500;
 
