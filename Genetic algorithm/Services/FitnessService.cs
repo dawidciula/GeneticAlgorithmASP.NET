@@ -9,7 +9,7 @@ namespace AG.Services
             double fitness = 0.0;
             int numberOfWorkers = schedule.GetLength(0);
             int daysInWeek = schedule.GetLength(1);
-            int targetWorkersPerShift = numberOfWorkers / 3;
+            int targetWorkersPerShift = numberOfWorkers / 4; // 12 pracowników, 4 zmiany -> 12/4 = 3 pracowników na każdą zmianę
 
             // Sekcja oceniająca równomierność przypisania pracowników do zmian
             for (int day = 0; day < daysInWeek; day++)
@@ -22,47 +22,17 @@ namespace AG.Services
                     shiftCounts[schedule[worker, day]]++;
                 }
 
-                // Dodawanie punktów za idealne przypisanie pracowników do zmian
-                for (int shift = 1; shift <= 3; shift++)
+                // Przyznawanie punktów za każdą zmianę, która ma dokładnie 3 pracowników
+                for (int shift = 0; shift < 4; shift++) // Zmiany są od 0 do 3
                 {
                     if (shiftCounts[shift] == targetWorkersPerShift)
                     {
-                        fitness += 5; // Dodaj punkty za idealne przypisanie do zmiany
+                        fitness += 10; // Dodaj 10 punktów, jeśli zmiana ma dokładnie 3 pracowników
                     }
                 }
             }
 
-            // Dodatkowe punkty, jeśli w każdej zmianie każdego dnia jest dokładnie 3 pracowników
-            bool isBalanced = true;
-            for (int day = 0; day < daysInWeek; day++)
-            {
-                int[] shiftCounts = new int[4]; // Liczba pracowników przypisanych do każdej zmiany (0-3)
-
-                // Zliczanie liczby pracowników przypisanych do każdej zmiany w danym dniu
-                for (int worker = 0; worker < numberOfWorkers; worker++)
-                {
-                    shiftCounts[schedule[worker, day]]++;
-                }
-
-                // Sprawdzenie, czy każda zmiana ma dokładnie 3 pracowników
-                for (int shift = 0; shift <= 3; shift++)
-                {
-                    if (shiftCounts[shift] != 3)
-                    {
-                        isBalanced = false;
-                        break;
-                    }
-                }
-
-                if (!isBalanced)
-                    break;
-            }
-
-            if (isBalanced)
-            {
-                fitness += 10; // Dodaj 10 punktów, jeśli warunek jest spełniony
-            }
-
+            // Funkcja zwraca ostateczny wynik
             return fitness;
         }
     }

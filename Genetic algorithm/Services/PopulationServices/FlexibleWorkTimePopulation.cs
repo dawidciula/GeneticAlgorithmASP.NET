@@ -23,28 +23,11 @@ public class FlexibleWorkTimePopulation
                 }
             }
 
-            // Dodanie ograniczeń po wygenerowaniu wstępnej populacji
-            ApplyShiftConstraints(schedule);
-
             population.Add(schedule);
         }
 
         return population;
     }
 
-    // Metoda do stosowania ograniczeń dotyczących zmian
-    private void ApplyShiftConstraints(int[,] schedule)
-    {
-        int workers = schedule.GetLength(0);
-        int days = schedule.GetLength(1);
-        
-        // Ograniczenie: Niedziela (ostatni dzień tygodnia) jest zawsze dniem wolnym (0)
-        for (int worker = 0; worker < workers; worker++)
-        {
-            schedule[worker, days - 1] = 0; // Ostatni dzień (niedziela) ustawiamy na dzień wolny
-        }
-
-        // Możesz tu dodać inne ograniczenia, jeśli będzie to konieczne
-        // Na przykład: zmiana nocna nie może występować po porannej itd.
-    }
+    
 }
