@@ -1,69 +1,65 @@
 using System;
-using System.Collections.Generic;
 
 namespace AG.Services
 {
     public class FitnessService
     {
-        public double CalculateFitness(int[,] schedule, List<int[]> employeePreferences, double preferenceWeight)
+        public double CalculateFitness(int[,] schedule)
         {
             double fitness = 0.0;
             int numberOfWorkers = schedule.GetLength(0);
             int daysInWeek = schedule.GetLength(1);
             int targetWorkersPerShift = numberOfWorkers / 3;
 
-            for (int worker = 0; worker < numberOfWorkers; worker++)
-            {
-                if (employeePreferences[worker] != null)
-                {
-                    for (int day = 0; day < daysInWeek; day++)
-                    {
-                        int shift = schedule[worker, day];
-                        int preference = employeePreferences[worker][day];
-                        if (shift == preference)
-                        {
-                            fitness += 10 * preferenceWeight;
-                        }
-                    }
-                }
-            }
-
+            // Sekcja oceniająca równomierność przypisania pracowników do zmian
             for (int day = 0; day < daysInWeek; day++)
             {
-                int[] shiftCounts = new int[4];
+                int[] shiftCounts = new int[4]; // Liczba pracowników przypisanych do każdej zmiany (0-3)
+
+                // Zliczanie liczby pracowników przypisanych do każdej zmiany w danym dniu
                 for (int worker = 0; worker < numberOfWorkers; worker++)
                 {
                     shiftCounts[schedule[worker, day]]++;
                 }
 
+                // Obliczanie penalizacji na podstawie kwadratowego odstępu od celu
                 for (int shift = 1; shift <= 3; shift++)
                 {
-                    fitness += 10 - Math.Abs(shiftCounts[shift] - targetWorkersPerShift);
+                    double penalty = Math.Abs(shiftCounts[shift] - targetWorkersPerShift);
+                    // Kwadratowa kara za większe różnice (większe odstępstwa będą miały większą karę)
+                    fitness += Math.Pow(penalty, 2);
                 }
             }
-            
-            //Sekcja oceniające harmonogramy ze względu na równomierne obsadzenie pracowników na zmianach
+
+            // Dodatkowe punkty, jeśli w każdej zmianie każdego dnia jest dokładnie 3 pracowników
+            bool isBalanced = true;
             for (int day = 0; day < daysInWeek; day++)
             {
-                int morningShiftCount = 0;
-                int afternoonShiftCount = 0;
-                int nightShiftCount = 0;
+                int[] shiftCounts = new int[4]; // Liczba pracowników przypisanych do każdej zmiany (0-3)
 
-                for (int employee = 0; employee < numberOfWorkers; employee++)
+                // Zliczanie liczby pracowników przypisanych do każdej zmiany w danym dniu
+                for (int worker = 0; worker < numberOfWorkers; worker++)
                 {
-                    int shift = schedule[employee, day];
-                    if (shift == 1) morningShiftCount++;
-                    else if (shift == 2) afternoonShiftCount++;
-                    else if (shift == 3) nightShiftCount++;
+                    shiftCounts[schedule[worker, day]]++;
                 }
 
-                double morningPenalty = Math.Abs(morningShiftCount - targetWorkersPerShift);
-                double afternoonPenalty = Math.Abs(afternoonShiftCount - targetWorkersPerShift);
-                double nightPenalty = Math.Abs(nightShiftCount - targetWorkersPerShift);
+                // Sprawdzenie, czy każda zmiana ma dokładnie 3 pracowników
+                for (int shift = 0; shift <= 3; shift++)
+                {
+                    if (shiftCounts[shift] != 3)
+                    {
+                        isBalanced = false;
+                        break;
+                    }
+                }
 
-                fitness += (10 - morningPenalty) * 3;
-                fitness += (10 - afternoonPenalty) * 3;
-                fitness += (10 - nightPenalty) * 3;
+                if (!isBalanced)
+                    break;
+            }
+
+            if (isBalanced)
+            {
+                fitness += 10; // Dodaj 10 punktów, jeśli warunek jest spełniony
             }
 
             return fitness;

@@ -11,104 +11,79 @@ namespace AG.Services
             var random = new Random();
             var population = new List<int[,]>();
 
+            // For a four-brigade system, the pattern is as follows: 1, 2, 3, 0, 1, 2, 3, 0...
+            // 1 = Shift 1, 2 = Shift 2, 3 = Shift 3, 0 = Free day
+
+            // Create initial population
             for (int i = 0; i < populationSize; i++)
             {
-                var schedule = new int[days, workers];  // Harmonogram (wiersze = dni, kolumny = pracownicy)
+                var schedule = new int[workers, days];  // Schedule (rows = workers, columns = days)
+
                 for (int worker = 0; worker < workers; worker++)
                 {
                     int workDaysCount = 0;
                     List<int> freeDays = new List<int>();
 
-                    // Losowanie 2 dni wolnych
-                    List<int> randomFreeDays = new List<int>();
-                    while (randomFreeDays.Count < 2)
-                    {
-                        int randomFreeDay = random.Next(0, days);
-                        if (!randomFreeDays.Contains(randomFreeDay))
-                        {
-                            randomFreeDays.Add(randomFreeDay);
-                        }
-                    }
-
-                    // Przypisanie zmian do dni tygodnia
+                    // Assign shifts and days off in a repeating 4-brigade pattern
                     for (int day = 0; day < days; day++)
                     {
-                        // Dni wolne
-                        if (randomFreeDays.Contains(day) || workDaysCount >= 5)
+                        // Cycle pattern: 1, 2, 3, 0 (1 - Shift 1, 2 - Shift 2, 3 - Shift 3, 0 - Free day)
+                        int shift = GetShiftForDay(worker, day);
+
+                        // Make sure there are exactly 5 work days and 2 free days
+                        if (shift != 0) // It's a work day
                         {
-                            schedule[day, worker] = 0; // Dzień wolny
-                            freeDays.Add(day);
-                            continue;
+                            workDaysCount++;
                         }
 
-                        int shift;
-                        bool isValidShift;
-                        int attempts = 0;
-
-                        // Losowanie zmiany (1: poranna, 2: popołudniowa, 3: nocna)
-                        do
-                        {
-                            shift = random.Next(1, 5);  // Zmiany 1-4 (czterobrygadowy system)
-                            isValidShift = IsValidShift(day, shift, schedule, worker);
-                            attempts++;
-                        }
-                        while (!isValidShift && attempts < 10);  // Próbujemy do 10 razy
-
-                        schedule[day, worker] = shift;
-                        if (shift != 0) workDaysCount++;
+                        schedule[worker, day] = shift;
                     }
 
+                    // Ensure exactly 5 work days and 2 free days
                     EnsureMinimumWorkDays(schedule, worker, workDaysCount, freeDays, random, days);
                 }
+
                 population.Add(schedule);
             }
 
             return population;
         }
 
-        // Walidacja zmiany: czy zmiana jest dozwolona (np. nie ma nocnej zmiany po dniu wolnym)
-        private bool IsValidShift(int day, int shift, int[,] schedule, int worker)
-        {
-            if (shift == 3 && day > 0 && schedule[day - 1, worker] == 0)  // Jeśli dzień wolny, nie można dać nocnej zmiany
-            {
-                return false;
-            }
-
-            if ((shift == 1 || shift == 2) && day > 0 && schedule[day - 1, worker] == 3)  // Jeśli nocna zmiana poprzedza dzien, nie można dać zmiany porannej lub popołudniowej
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        // Zapewnienie minimalnej liczby dni roboczych (dokładnie 5 dni w tygodniu)
+        // Ensure each worker has exactly 5 workdays and 2 free days
         private void EnsureMinimumWorkDays(int[,] schedule, int worker, int workDaysCount, List<int> freeDays, Random random, int daysInWeek)
         {
-            // Gwarantowanie, że pracownik ma dokładnie 5 dni roboczych
+            // If there are less than 5 working days, assign additional workdays to free days
             while (workDaysCount < 5 && freeDays.Count > 0)
             {
                 int dayToWork = freeDays[random.Next(freeDays.Count)];
                 freeDays.Remove(dayToWork);
 
-                // Losowanie zmiany (rano, popołudniu, nocna)
-                schedule[dayToWork, worker] = random.Next(1, 5);  // Zmiana 1-4
+                // Assign a shift to this day
+                schedule[worker, dayToWork] = GetShiftForDay(worker, dayToWork);  // Assign a shift (1, 2, or 3)
                 workDaysCount++;
             }
 
-            // Gwarantowanie, że pracownik będzie miał dokładnie 2 dni wolne w tygodniu
+            // Ensure exactly 2 free days
             while (freeDays.Count < 2)
             {
                 int randomDay;
                 do
                 {
-                    randomDay = random.Next(daysInWeek);
-                } while (freeDays.Contains(randomDay));
+                    randomDay = random.Next(daysInWeek);  // Ensure this is within valid range
+                } while (freeDays.Contains(randomDay));  // Prevent exceeding the days range
 
                 freeDays.Add(randomDay);
-                schedule[randomDay, worker] = 0;  // Dzień wolny
+                schedule[worker, randomDay] = 0;  // Mark this day as a free day
                 workDaysCount--;
             }
+        }
+
+        // Helper method to get the shift for a given day in the rotating cycle (1, 2, 3, 0)
+        private int GetShiftForDay(int worker, int day)
+        {
+            // The shift pattern is 1, 2, 3, 0 (repeats every 4 days)
+            int[] shiftPattern = { 1, 2, 3, 0 };
+            return shiftPattern[day % 4];
         }
     }
 }

@@ -31,6 +31,12 @@
                 <label for="ScheduleParametersList[@i].NumberOfWorkers">Liczba pracowników:</label>
                 <input type="number" name="ScheduleParametersList[@i].NumberOfWorkers" class="form-control" value="@Model.ScheduleParametersList[i].NumberOfWorkers" />
             </div>
+            <!-- Przycisk do otwarcia okienka preferencji pracowników -->
+            <div>
+                <button type="button" class="btn btn-secondary mt-2" id="openPreferencesModalButton">
+                    Wprowadź preferencje pracowników
+                </button>
+            </div>
             <div>
                 <label for="ScheduleParametersList[@i].DaysInWeek">Liczba dni:</label>
                 <input type="number" name="ScheduleParametersList[@i].DaysInWeek" class="form-control" value="7" readonly />
@@ -39,6 +45,7 @@
                 <label for="ScheduleParametersList[@i].NumberofWeeks">Ilość tygodni:</label>
                 <input type="number" name="ScheduleParametersList[@i].NumberOfWeeks" class="form-control" value="@Model.ScheduleParametersList[i].NumberOfWeeks" />
             </div>
+            
         }
     </fieldset>
 
@@ -102,14 +109,89 @@
     </div>
 </div>
 
+<!-- Modal dla preferencji pracowników -->
+<div class="modal fade" id="preferencesModal" tabindex="-1" aria-labelledby="preferencesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="preferencesModalLabel">Preferencje pracowników</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="PreferencesForm">
+                    <div id="preferencesContainer"></div>
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-primary">Zapisz preferencje</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <!-- Bootstrap 5 JS i Popper.js do działania okienka popup -->
 <script src="https://cdn.jsdelivr.net/npm/popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
 
-<!-- Skrypt JavaScript do obsługi otwierania popupu -->
 <script>
+    // Modal zaawansowanych ustawień
     var modal = new bootstrap.Modal(document.getElementById('algorithmSettingsModal'));
     document.getElementById('openModalButton').addEventListener('click', function () {
         modal.show();
     });
+
+    // Obsługa przycisku preferencji pracowników
+    const openPreferencesModalButton = document.getElementById('openPreferencesModalButton');
+    const preferencesModal = new bootstrap.Modal(document.getElementById('preferencesModal'));
+    const preferencesContainer = document.getElementById('preferencesContainer');
+    const numberOfWorkersInput = document.querySelector('input[name="ScheduleParametersList[0].NumberOfWorkers"]'); // Zakładając tylko jeden zestaw danych
+
+      // Aktywacja przycisku dodania preferencji
+        numberOfWorkersInput.addEventListener('input', () => {
+            const numberOfWorkers = parseInt(numberOfWorkersInput.value);
+            openPreferencesModalButton.disabled = isNaN(numberOfWorkers) || numberOfWorkers < 1;
+        });
+    
+        // Otwieranie modala i generowanie pól preferencji
+        openPreferencesModalButton.addEventListener('click', () => {
+            const numberOfWorkers = parseInt(numberOfWorkersInput.value);
+            preferencesContainer.innerHTML = ''; // Wyczyść pola przy otwieraniu
+    
+            for (let i = 1; i <= numberOfWorkers; i++) {
+                const workerPreferences = `
+                    <fieldset class="mb-3">
+                        <legend>Pracownik ${i}</legend>
+                        <div class="mb-2">
+                            <label for="Worker${i}PreferredShifts" class="form-label">Preferowane zmiany (lub brak):</label>
+                            <select id="Worker${i}PreferredShifts" name="WorkerPreferences[${i - 1}].PreferredShifts" class="form-select" multiple>
+                                <option value="">Brak preferencji</option>
+                                <option value="1">Rano</option>
+                                <option value="2">Popołudnie</option>
+                                <option value="3">Noc</option>
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <label for="Worker${i}MaxWorkDays" class="form-label">Maksymalna liczba dni pracy:</label>
+                            <input type="number" id="Worker${i}MaxWorkDays" name="WorkerPreferences[${i - 1}].MaxWorkDays" class="form-control" min="1" max="7" placeholder="Brak preferencji" />
+                        </div>
+                        <div class="mb-2">
+                            <label for="Worker${i}MinDaysOff" class="form-label">Minimalna liczba dni wolnych:</label>
+                            <input type="number" id="Worker${i}MinDaysOff" name="WorkerPreferences[${i - 1}].MinDaysOff" class="form-control" min="0" max="6" placeholder="Brak preferencji" />
+                        </div>
+                    </fieldset>
+                `;
+                preferencesContainer.insertAdjacentHTML('beforeend', workerPreferences);
+            }
+    
+            preferencesModal.show();
+        });
+    
+        // Obsługa zapisania preferencji
+        document.getElementById('PreferencesForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            preferencesModal.hide();
+            alert('Preferencje zostały zapisane!');
+        });
 </script>

@@ -33,16 +33,17 @@ namespace AG.Services
         }
 
 
-        public ScheduleResult RunAlgorithm(OptimizationParameters optimizationParameters,ScheduleParameters scheduleParameters , WorkRegime workRegime, EmployeePreference employeePreference)
+        public ScheduleResult RunAlgorithm(OptimizationParameters optimizationParameters, ScheduleParameters scheduleParameters, WorkRegime workRegime, EmployeePreference employeePreference)
         {
-            int populationSize = optimizationParameters.PopulationSize;
-            int numberOfWorkers = scheduleParameters.NumberOfWorkers;
-            int daysInWeek = scheduleParameters.DaysInWeek;
-            double preferenceWeight = optimizationParameters.PreferenceWeight;
-            var optimizationType = (OptimizationType)optimizationParameters.OptimizationType;
-            double mutationFrequency = optimizationParameters.MutationFrequency;
-            int numberOfParents = optimizationParameters.NumberOfParents;
-            int eliteCount = (int)(optimizationParameters.PopulationSize * optimizationParameters.ElitePercentage);
+            // Parametry ustawione na sztywno
+            int populationSize = 80; // Rozmiar populacji
+            int numberOfWorkers = 12;  // Liczba pracowników
+            int daysInWeek = 7; // Liczba dni w tygodniu
+            double preferenceWeight = 0.7; // Waga preferencji
+            var optimizationType = OptimizationType.RouletteSelection; // Typ optymalizacji
+            double mutationFrequency = 0.3; // Częstotliwość mutacji
+            int numberOfParents = 10; // Liczba rodziców
+            int eliteCount = (int)(populationSize * 0.2); // Procent elitarnych osobników
 
             Console.WriteLine("Uruchomiono algorytm z następującymi parametrami:");
             Console.WriteLine($"OptimizationType: {optimizationType}");
@@ -50,13 +51,11 @@ namespace AG.Services
             Console.WriteLine($"PreferenceWeight: {preferenceWeight}");
             Console.WriteLine($"MutationFrequency: {mutationFrequency}");
             Console.WriteLine($"NumberOfParents: {numberOfParents}");
-            Console.WriteLine($"ElitePercentage: {optimizationParameters.ElitePercentage}");
+            Console.WriteLine($"ElitePercentage: 0.2");
             Console.WriteLine($"NumberOfWorkers: {numberOfWorkers}");
             Console.WriteLine($"DaysInWeek: {daysInWeek}");
             Console.WriteLine($"WorkRegime: {workRegime}");
 
-
-            
             var employeePreferences = new List<int[]>
             {
                 new int[] {1, 1, 1, 1, 1, 0, 0}, // Pracownik 1
@@ -73,7 +72,6 @@ namespace AG.Services
                 null
             };
 
-          
             var random = new Random();
             // Wybór populacji na podstawie WorkRegime
             List<int[,]> population;
@@ -97,7 +95,7 @@ namespace AG.Services
             {
                 // Obliczanie fitness
                 var fitness = population.Select(schedule =>
-                    _fitnessService.CalculateFitness(schedule, employeePreferences, preferenceWeight)).ToArray();
+                    _fitnessService.CalculateFitness(schedule)).ToArray();
                 
                 // Znajdź maksymalny fitness w obecnej generacji
                 double currentBestFitness = fitness.Max();
@@ -229,8 +227,6 @@ namespace AG.Services
 
             return parents;
         }
-
-
 
         private double[] FillSlots(double[] fitness)
         {
