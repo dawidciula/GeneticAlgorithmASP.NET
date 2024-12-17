@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using AG.Models;
 using Genetic_algorithm.Models;
 
@@ -32,7 +29,6 @@ namespace AG.Services
             _bestFitness = 0.0;
         }
 
-
         public ScheduleResult RunAlgorithm(OptimizationParameters optimizationParameters, ScheduleParameters scheduleParameters, WorkRegime workRegime, EmployeePreference employeePreference)
         {
             // Parametry ustawione na sztywno
@@ -42,7 +38,7 @@ namespace AG.Services
             double preferenceWeight = 0.7; // Waga preferencji
             var optimizationType = OptimizationType.RouletteSelection; // Typ optymalizacji
             double mutationFrequency = 0.3; // Częstotliwość mutacji
-            int numberOfParents = 10; // Liczba rodziców
+            int numberOfParents = 4; // Liczba rodziców
             int eliteCount = (int)(populationSize * 0.2); // Procent elitarnych osobników
 
             Console.WriteLine("Uruchomiono algorytm z następującymi parametrami:");
@@ -97,22 +93,28 @@ namespace AG.Services
                 var fitness = population.Select(schedule =>
                     _fitnessService.CalculateFitness(schedule)).ToArray();
                 
+                // Validate fitness array before using it
+                if (fitness == null || fitness.Length == 0)
+                {
+                    throw new InvalidOperationException("Fitness array is empty or null.");
+                }
+
                 // Znajdź maksymalny fitness w obecnej generacji
                 double currentBestFitness = fitness.Max();
                 
-                // Jeśli nowy maksymalny fitness jest lepszy niż dotychczasowy
+                // If new max fitness is better than the previous one
                 if (currentBestFitness > _bestFitness)
                 {
                     _bestFitness = currentBestFitness;
                     _bestSchedule = population[Array.IndexOf(fitness, currentBestFitness)];
-                    generationsWithoutImprovement = 0; // Reset stagnacji
+                    generationsWithoutImprovement = 0; // Reset stagnation counter
                 }
                 else
                 {
-                    generationsWithoutImprovement++; // Zwiększ licznik stagnacji
+                    generationsWithoutImprovement++; // Increase stagnation counter
                 }
                 
-                // Sprawdź warunek stagnacji
+                // Check stagnation condition
                 if (generationsWithoutImprovement >= maxStagnation)
                 {
                     Console.WriteLine($"Algorytm zatrzymany z powodu stagnacji po {generation} generacjach.");
@@ -129,26 +131,25 @@ namespace AG.Services
                     }
                 }
 
-                // Jeśli znaleziono maksymalny fitness, zakończ pętlę
+                // If maximum fitness is found, break the loop
                 if (_bestFitness >= 1000.0)
                 {
                     break;
                 }
                 
-                // Sortowanie populacji według fitness (od najlepszego do najgorszego)
+                // Sort population by fitness (highest to lowest)
                 var sortedPopulation = population.Zip(fitness, (schedule, fit) => new { Schedule = schedule, Fitness = fit })
                     .OrderByDescending(x => x.Fitness)
                     .ToList();
                 
-                // Pobierz elitarne osobniki
-                double fitnessThreshold = 0.8 * _bestFitness; // Próg fitness jako 80% najlepszego
+                // Get elite individuals
+                double fitnessThreshold = 0.8 * _bestFitness; // Fitness threshold as 80% of best
                 var eliteIndividuals = sortedPopulation
                     .Where(x => x.Fitness >= fitnessThreshold)
                     .Select(x => x.Schedule)
                     .ToList();
 
-                
-                // Selekcja rodziców z reszty populacji
+                // Select parents from the rest of the population
                 var parents = SelectParents(
                     sortedPopulation.Skip(eliteCount).Select(x => x.Schedule).ToList(),
                     sortedPopulation.Skip(eliteCount).Select(x => x.Fitness).ToArray(),
@@ -157,16 +158,16 @@ namespace AG.Services
                     numberOfParents,
                     mutationFrequency);
 
-                // Krzyżowanie
+                // Perform crossover
                 var offspring = _crossoverService.PerformCrossover(parents, random, numberOfWorkers, daysInWeek);
 
-                // Mutacja
+                // Perform mutation
                 _mutationService.PerformMutation(offspring, random, numberOfWorkers, daysInWeek, mutationFrequency);
                 
-                // Dodaj elitarne osobniki do potomstwa
+                // Add elite individuals to offspring
                 offspring.AddRange(eliteIndividuals);
 
-                // Aktualizacja populacji
+                // Update population
                 population = offspring;
             }
 
@@ -183,16 +184,18 @@ namespace AG.Services
 
             if (optimizationType == OptimizationType.RouletteSelection)
             {
+                
                 double maxFitness = fitness.Max();
                 double minFitness = fitness.Min();
                 double threshold = maxFitness * 0.1; // Próg skalowania
 
+                // Normalize fitness values and ensure no negative or invalid values
                 for (int i = 0; i < fitness.Length; i++)
                 {
                     if (fitness[i] > threshold)
                         fitness[i] = (fitness[i] - threshold) / (maxFitness - threshold);
                     else
-                        fitness[i] = 0; // Ucinanie niskich wartości fitness
+                        fitness[i] = 0; // Truncate low fitness values
                 }
 
                 var slots = FillSlots(fitness);
@@ -204,7 +207,7 @@ namespace AG.Services
             }
             else if (optimizationType == OptimizationType.TournamentSelection)
             {
-                int tournamentSize = Math.Max(2, numberOfParents); // Domyślny rozmiar turnieju
+                int tournamentSize = Math.Max(2, numberOfParents); // Default tournament size
 
                 for (int i = 0; i < numberOfParents; i++)
                 {
