@@ -22,12 +22,13 @@ namespace AG.Services
                     shiftCounts[schedule[worker, day]]++;
                 }
 
-                // Obliczanie penalizacji na podstawie kwadratowego odstępu od celu
+                // Dodawanie punktów za idealne przypisanie pracowników do zmian
                 for (int shift = 1; shift <= 3; shift++)
                 {
-                    double penalty = Math.Abs(shiftCounts[shift] - targetWorkersPerShift);
-                    // Kwadratowa kara za większe różnice (większe odstępstwa będą miały większą karę)
-                    fitness += Math.Pow(penalty, 2);
+                    if (shiftCounts[shift] == targetWorkersPerShift)
+                    {
+                        fitness += 5; // Dodaj punkty za idealne przypisanie do zmiany
+                    }
                 }
             }
 
