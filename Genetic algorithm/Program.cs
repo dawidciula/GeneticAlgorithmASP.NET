@@ -1,7 +1,9 @@
 using AG.Models;
 using AG.Services;
+using Genetic_algorithm.Interfaces;
 using Genetic_algorithm.Repository;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualBasic;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,7 +23,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 //Services
 builder.Services.AddScoped<FitnessService>();
-builder.Services.AddScoped<FlexibleWorkTimePopulation>();
+builder.Services.AddScoped<Population>();
 builder.Services.AddScoped<FourbrigadePopulation>();
 builder.Services.AddScoped<CrossoverService>();
 builder.Services.AddScoped<MutationService>();
@@ -29,8 +31,6 @@ builder.Services.AddScoped<AlgorithmService>();
 builder.Services.AddScoped<IRepository, Repository>();
 
 var app = builder.Build();
-
-
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

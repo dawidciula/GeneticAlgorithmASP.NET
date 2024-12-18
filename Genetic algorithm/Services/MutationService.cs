@@ -20,8 +20,14 @@ namespace AG.Services
                         int worker = random.Next(workers);
                         int day = random.Next(days);
 
-                        // Przypisanie losowej zmiany (0-3)
-                        schedule[worker, day] = random.Next(0, 4);
+                        // Jeżeli to niedziela (dzień 6), nie zmieniamy zmiany (pozostaje 0)
+                        if (day == 6)
+                        {
+                            continue; // Pomijamy mutację w niedzielę
+                        }
+
+                        // W pozostałych dniach, losujemy dowolną zmianę (0-3)
+                        schedule[worker, day] = random.Next(0, 4); // Losowanie zmiany (0-3)
                     }
                 }
             }

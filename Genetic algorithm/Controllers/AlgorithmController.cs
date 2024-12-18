@@ -14,15 +14,15 @@ namespace AG.Controllers
     {
         private readonly AlgorithmService _algorithmService;
         private readonly IRepository _repository;
-        private readonly FlexibleWorkTimePopulation _flexibleWorkTimePopulation;
+        private readonly Population _population;
         private readonly FourbrigadePopulation _fourBrigadePopulation;
 
         public AlgorithmController(AlgorithmService algorithmService, IRepository repository,
-            FlexibleWorkTimePopulation flexibleWorkTimePopulation, FourbrigadePopulation fourBrigadePopulation)
+            Population population, FourbrigadePopulation fourBrigadePopulation)
         {
             _algorithmService = algorithmService;
             _repository = repository;
-            _flexibleWorkTimePopulation = flexibleWorkTimePopulation;
+            _population = population;
             _fourBrigadePopulation = fourBrigadePopulation;
         }
 
@@ -146,7 +146,7 @@ namespace AG.Controllers
             switch (scheduleParameters.WorkRegime)
             {
                 case WorkRegime.FlexibleWorkTime:
-                    population = _flexibleWorkTimePopulation.GenerateInitialPopulation(
+                    population = _population.GenerateInitialPopulation(
                         optimizationParameters.PopulationSize,
                         scheduleParameters.NumberOfWorkers,
                         scheduleParameters.DaysInWeek);

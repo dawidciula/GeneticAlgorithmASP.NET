@@ -1,4 +1,5 @@
 using AG.Models;
+using Genetic_algorithm.Interfaces;
 using Genetic_algorithm.Models;
 
 namespace AG.Services
@@ -6,7 +7,7 @@ namespace AG.Services
     public class AlgorithmService
     {
         private readonly FitnessService _fitnessService;
-        private readonly FlexibleWorkTimePopulation _flexibleWorkTimePopulation;
+        private readonly Population _population;
         private readonly FourbrigadePopulation _fourBrigadePopulation;
         private readonly CrossoverService _crossoverService;
         private readonly MutationService _mutationService;
@@ -16,13 +17,13 @@ namespace AG.Services
 
         public AlgorithmService(
             FitnessService fitnessService,
-            FlexibleWorkTimePopulation flexibleWorkTimePopulation,
+            Population population,
             FourbrigadePopulation fourBrigadePopulation,
             CrossoverService crossoverService,
             MutationService mutationService)
         {
             _fitnessService = fitnessService;
-            _flexibleWorkTimePopulation = flexibleWorkTimePopulation;
+            _population = population;
             _fourBrigadePopulation = fourBrigadePopulation;
             _crossoverService = crossoverService;
             _mutationService = mutationService;
@@ -33,13 +34,14 @@ namespace AG.Services
         {
             // Parametry ustawione na sztywno
             int populationSize = 100; // Rozmiar populacji
-            int numberOfWorkers = 12;  // Liczba pracowników
+            int numberOfWorkers = 16;  // Liczba pracowników
             int daysInWeek = 7; // Liczba dni w tygodniu
             double preferenceWeight = 0.7; // Waga preferencji
             var optimizationType = OptimizationType.RouletteSelection; // Typ optymalizacji
-            double mutationFrequency = 0.1; // Częstotliwość mutacji
+            double mutationFrequency = 0.15; // Częstotliwość mutacji
             int numberOfParents = 100; // Liczba rodziców
             int eliteCount = (int)(populationSize * 0.2); // Procent elitarnych osobników
+            int numberOfCrossoverPoints = 4;  // 3 punkty krzyżowania
 
             Console.WriteLine("Uruchomiono algorytm z następującymi parametrami:");
             Console.WriteLine($"OptimizationType: {optimizationType}");
@@ -56,6 +58,11 @@ namespace AG.Services
             {
                 new int[] {1, 1, 1, 1, 1, 0, 0}, // Pracownik 1
                 new int[] {0, 1, 1, 1, 0, 2, 0}, // Pracownik 2
+                new int[] {3, 3, 0, 2, 1, 0, 0}, // Pracownik 2
+                null,
+                null,
+                null,
+                null,
                 null,
                 null,
                 null,
@@ -73,7 +80,7 @@ namespace AG.Services
             List<int[,]> population;
             if (workRegime == WorkRegime.FlexibleWorkTime)
             {
-                population = _flexibleWorkTimePopulation.GenerateInitialPopulation(populationSize, numberOfWorkers, daysInWeek);
+                population = _population.GenerateInitialPopulation(populationSize, numberOfWorkers, daysInWeek);
             }
             else if (workRegime == WorkRegime.Fourbrigade)
             {
@@ -83,14 +90,15 @@ namespace AG.Services
             {
                 throw new ArgumentException("Nieznany tryb pracy populacji.");
             }
-
+            
+          
             int generationsWithoutImprovement = 0;
-            const int maxStagnation = 50000;
+            const int maxStagnation = 200000;
 
-            for (int generation = 0; generation < 100000; generation++)
+            for (int generation = 0; generation < 400000; generation++)
             {
                 // Obliczanie fitness
-                var fitness = population.Select(schedule => _fitnessService.CalculateFitness(schedule)).ToArray();
+                var fitness = population.Select(schedule => _fitnessService.CalculateFitness(schedule, employeePreferences)).ToArray();
 
 
                 // Sprawdzenie poprawności tablicy fitness przed jej użyciem
@@ -160,7 +168,7 @@ namespace AG.Services
                     mutationFrequency);
 
                 // Wykonanie krzyżowania
-                var offspring = _crossoverService.PerformCrossover(parents, random, numberOfWorkers, daysInWeek);
+                var offspring = _crossoverService.PerformCrossover(parents, random, numberOfWorkers, daysInWeek, numberOfCrossoverPoints);
 
                 // Wykonanie mutacji
                 _mutationService.PerformMutation(offspring, random, numberOfWorkers, daysInWeek, mutationFrequency);
