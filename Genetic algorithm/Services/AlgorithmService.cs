@@ -38,10 +38,10 @@ namespace AG.Services
             int daysInWeek = 7; // Liczba dni w tygodniu
             double preferenceWeight = 0.7; // Waga preferencji
             var optimizationType = OptimizationType.RouletteSelection; // Typ optymalizacji
-            double mutationFrequency = 0.15; // Częstotliwość mutacji
+            double mutationFrequency = 0.1; // Częstotliwość mutacji
             int numberOfParents = 100; // Liczba rodziców
             int eliteCount = (int)(populationSize * 0.2); // Procent elitarnych osobników
-            int numberOfCrossoverPoints = 4;  // 3 punkty krzyżowania
+            int numberOfCrossoverPoints = 6;  // 3 punkty krzyżowania
 
             Console.WriteLine("Uruchomiono algorytm z następującymi parametrami:");
             Console.WriteLine($"OptimizationType: {optimizationType}");
