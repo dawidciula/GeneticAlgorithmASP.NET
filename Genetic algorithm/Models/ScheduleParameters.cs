@@ -9,8 +9,10 @@ public enum WorkRegime
 public class ScheduleParameters
 {
     public int Id { get; set; }
-    public WorkRegime WorkRegime { get; set; }
     public int NumberOfWorkers { get; set; }
     public int DaysInWeek { get; set; }
     public int NumberOfWeeks { get; set; }
+    public int MorningShiftWorkers { get; set; }
+    public int AfternoonShiftWorkers { get; set; }
+    public int NightShiftWorkers { get; set; }
 }

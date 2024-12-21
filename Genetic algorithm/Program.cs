@@ -1,3 +1,4 @@
+using System.Globalization;
 using AG.Models;
 using AG.Services;
 using Genetic_algorithm.Interfaces;
@@ -13,7 +14,11 @@ builder.Services.AddControllersWithViews();
 
 //Konfiguracja bazy danych
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseInMemoryDatabase("InMemoryDb"));
+    options.UseMySql(
+        builder.Configuration.GetConnectionString("DefaultConnection"), 
+        new MySqlServerVersion(new Version(8, 3, 0)) // Wersja MySQL 8.0.0, dostosuj do swojej wersji
+    )
+);
 
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>();
@@ -22,7 +27,6 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.Requ
 //Services
 builder.Services.AddScoped<FitnessService>();
 builder.Services.AddScoped<Population>();
-builder.Services.AddScoped<FourbrigadePopulation>();
 builder.Services.AddScoped<CrossoverService>();
 builder.Services.AddScoped<MutationService>();
 builder.Services.AddScoped<AlgorithmService>();

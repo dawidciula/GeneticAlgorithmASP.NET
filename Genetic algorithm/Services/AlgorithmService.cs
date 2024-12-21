@@ -8,7 +8,6 @@ namespace AG.Services
     {
         private readonly FitnessService _fitnessService;
         private readonly Population _population;
-        private readonly FourbrigadePopulation _fourBrigadePopulation;
         private readonly CrossoverService _crossoverService;
         private readonly MutationService _mutationService;
 
@@ -18,30 +17,30 @@ namespace AG.Services
         public AlgorithmService(
             FitnessService fitnessService,
             Population population,
-            FourbrigadePopulation fourBrigadePopulation,
             CrossoverService crossoverService,
             MutationService mutationService)
         {
             _fitnessService = fitnessService;
             _population = population;
-            _fourBrigadePopulation = fourBrigadePopulation;
             _crossoverService = crossoverService;
             _mutationService = mutationService;
             _bestFitness = 0.0;
         }
 
-        public ScheduleResult RunAlgorithm(OptimizationParameters optimizationParameters, ScheduleParameters scheduleParameters, WorkRegime workRegime, EmployeePreference employeePreference)
+        public ScheduleResult RunAlgorithm(OptimizationParameters optimizationParameters, ScheduleParameters scheduleParameters, EmployeePreference employeePreference)
         {
             // Parametry ustawione na sztywno
-            int populationSize = 100; // Rozmiar populacji
-            int numberOfWorkers = 16;  // Liczba pracowników
-            int daysInWeek = 7; // Liczba dni w tygodniu
-            double preferenceWeight = 0.7; // Waga preferencji
-            var optimizationType = OptimizationType.RouletteSelection; // Typ optymalizacji
-            double mutationFrequency = 0.1; // Częstotliwość mutacji
-            int numberOfParents = 100; // Liczba rodziców
-            int eliteCount = (int)(populationSize * 0.2); // Procent elitarnych osobników
-            int numberOfCrossoverPoints = 6;  // 3 punkty krzyżowania
+            int populationSize = optimizationParameters.PopulationSize;
+            int numberOfWorkers = scheduleParameters.NumberOfWorkers;
+            int daysInWeek = 7;
+            double preferenceWeight = 0;
+            var optimizationType = OptimizationType.RouletteSelection;
+            double mutationFrequency = optimizationParameters.MutationFrequency;
+            int numberOfParents = optimizationParameters.NumberOfParents;
+            int eliteCount = (int)(populationSize * optimizationParameters.ElitePercentage);
+            int numberOfCrossoverPoints = optimizationParameters.CrossoverPoints;
+            int maxGenerations = optimizationParameters.MaxGenerations;
+            int maxStagnation = optimizationParameters.MaxStagnation;
 
             Console.WriteLine("Uruchomiono algorytm z następującymi parametrami:");
             Console.WriteLine($"OptimizationType: {optimizationType}");
@@ -52,7 +51,6 @@ namespace AG.Services
             Console.WriteLine($"ElitePercentage: 0.2");
             Console.WriteLine($"NumberOfWorkers: {numberOfWorkers}");
             Console.WriteLine($"DaysInWeek: {daysInWeek}");
-            Console.WriteLine($"WorkRegime: {workRegime}");
 
             var employeePreferences = new List<int[]>
             {
@@ -78,24 +76,13 @@ namespace AG.Services
             var random = new Random();
             // Wybór populacji na podstawie WorkRegime
             List<int[,]> population;
-            if (workRegime == WorkRegime.FlexibleWorkTime)
-            {
-                population = _population.GenerateInitialPopulation(populationSize, numberOfWorkers, daysInWeek);
-            }
-            else if (workRegime == WorkRegime.Fourbrigade)
-            {
-                population = _fourBrigadePopulation.GenerateInitialPopulation(populationSize, numberOfWorkers, daysInWeek);
-            }
-            else
-            {
-                throw new ArgumentException("Nieznany tryb pracy populacji.");
-            }
+            population = _population.GenerateInitialPopulation(populationSize, numberOfWorkers, daysInWeek);
+            
             
           
             int generationsWithoutImprovement = 0;
-            const int maxStagnation = 200000;
 
-            for (int generation = 0; generation < 400000; generation++)
+            for (int generation = 0; generation < maxGenerations; generation++)
             {
                 // Obliczanie fitness
                 var fitness = population.Select(schedule => _fitnessService.CalculateFitness(schedule, employeePreferences)).ToArray();
@@ -157,15 +144,18 @@ namespace AG.Services
                     .Where(x => x.Fitness >= fitnessThreshold)
                     .Select(x => x.Schedule)
                     .ToList();
+                
+                // Selekcja rodziców z reszty populacji
+                List<int[,]> parents;
 
                 // Selekcja rodziców z reszty populacji
-                var parents = SelectParents(
-                    sortedPopulation.Skip(eliteCount).Select(x => x.Schedule).ToList(),
-                    sortedPopulation.Skip(eliteCount).Select(x => x.Fitness).ToArray(),
-                    optimizationType,
-                    random,
-                    numberOfParents,
-                    mutationFrequency);
+                    parents = SelectParents(
+                        sortedPopulation.Skip(eliteCount).Select(x => x.Schedule).ToList(),
+                        sortedPopulation.Skip(eliteCount).Select(x => x.Fitness).ToArray(),
+                        optimizationType, // Przekazanie odpowiedniego typu
+                        random,
+                        numberOfParents,
+                        mutationFrequency);
 
                 // Wykonanie krzyżowania
                 var offspring = _crossoverService.PerformCrossover(parents, random, numberOfWorkers, daysInWeek, numberOfCrossoverPoints);

@@ -21,15 +21,31 @@
         @for (int i = 0; i < Model.ScheduleParametersList.Count; i++)
         {
             <div>
-                <label for="ScheduleParametersList[@i].WorkRegime">Typ optymalizacji:</label>
-                <select name="ScheduleParametersList[@i].WorkRegime" class="form-control">
-                    <!option value="1" @(Model.ScheduleParametersList[i].WorkRegime == WorkRegime.FlexibleWorkTime ? "selected" : "")>Elastyczny czas pracy</!option>
-                    <!option value="2" @(Model.ScheduleParametersList[i].WorkRegime == WorkRegime.Fourbrigade ? "selected" : "")>Czterobrygadówka</!option>
-                </select>
-            </div>
-            <div>
                 <label for="ScheduleParametersList[@i].NumberOfWorkers">Liczba pracowników:</label>
                 <input type="number" name="ScheduleParametersList[@i].NumberOfWorkers" class="form-control" value="@Model.ScheduleParametersList[i].NumberOfWorkers" />
+            </div>
+            <!-- Dodanie pól dla liczby pracowników na zmiany -->
+            <div>
+                <label>Liczba pracowników na zmianę:</label>
+                <div class="row">
+                    <!-- Zmiana poranna -->
+                    <div class="col">
+                        <label for="ScheduleParametersList[@i].MorningShiftWorkers">Rano:</label>
+                        <input type="number" name="ScheduleParametersList[@i].MorningShiftWorkers" class="form-control" value="@Model.ScheduleParametersList[i].MorningShiftWorkers" min="0" />
+                    </div>
+
+                    <!-- Zmiana popołudniowa -->
+                    <div class="col">
+                        <label for="ScheduleParametersList[@i].AfternoonShiftWorkers">Popołudnie:</label>
+                        <input type="number" name="ScheduleParametersList[@i].AfternoonShiftWorkers" class="form-control" value="@Model.ScheduleParametersList[i].AfternoonShiftWorkers" min="0" />
+                    </div>
+
+                    <!-- Zmiana nocna -->
+                    <div class="col">
+                        <label for="ScheduleParametersList[@i].NightShiftWorkers">Noc:</label>
+                        <input type="number" name="ScheduleParametersList[@i].NightShiftWorkers" class="form-control" value="@Model.ScheduleParametersList[i].NightShiftWorkers" min="0" />
+                    </div>
+                </div>
             </div>
             <!-- Przycisk do otwarcia okienka preferencji pracowników -->
             <div>
@@ -87,7 +103,7 @@
 
                             <div>
                                 <label for="OptimizationParametersList[@i].MutationFrequency">Częstotliwość mutacji:</label>
-                                <input type="number" name="OptimizationParametersList[@i].MutationFrequency" class="form-control" value="@Model.OptimizationParametersList[i].MutationFrequency" min="0" max="1" step="0.01" />
+                                <input type="input" name="OptimizationParametersList[@i].MutationFrequency" class="form-control" value="@Model.OptimizationParametersList[i].MutationFrequency" min="0" max="1" step="0.01" />
                             </div>
 
                             <div>
@@ -97,7 +113,23 @@
 
                             <div>
                                 <label for="OptimizationParametersList[@i].ElitePercentage">Procent elitarnych osobników:</label>
-                                <input type="number" name="OptimizationParametersList[@i].ElitePercentage" class="form-control" value="@Model.OptimizationParametersList[i].ElitePercentage" min="0" max="1" step="0.01" />
+                                <input type="input" name="OptimizationParametersList[@i].ElitePercentage" class="form-control" value="@Model.OptimizationParametersList[i].ElitePercentage" min="0" max="1" step="0.01" />
+                            </div>
+
+                            <!-- Dodanie brakujących pól -->
+                            <div>
+                                <label for="OptimizationParametersList[@i].MaxGenerations">Maksymalna liczba generacji:</label>
+                                <input type="number" name="OptimizationParametersList[@i].MaxGenerations" class="form-control" value="@Model.OptimizationParametersList[i].MaxGenerations" min="1" />
+                            </div>
+
+                            <div>
+                                <label for="OptimizationParametersList[@i].MaxStagnation">Maksymalna liczba generacji bez poprawy:</label>
+                                <input type="number" name="OptimizationParametersList[@i].MaxStagnation" class="form-control" value="@Model.OptimizationParametersList[i].MaxStagnation" min="0" />
+                            </div>
+
+                            <div>
+                                <label for="OptimizationParametersList[@i].CrossoverPoints">Liczba punktów krzyżowania:</label>
+                                <input type="number" name="OptimizationParametersList[@i].CrossoverPoints" class="form-control" value="@Model.OptimizationParametersList[i].CrossoverPoints" min="1" />
                             </div>
                         }
                     </fieldset>
@@ -108,6 +140,7 @@
         </div>
     </div>
 </div>
+
 
 <!-- Okienko Modalne - Algorytm w trakcie działania -->
 <div class="modal" tabindex="-1" id="loadingModal" aria-hidden="true">

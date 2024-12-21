@@ -11,44 +11,46 @@ using System.Threading.Tasks;
 namespace AG.Controllers
 {
     public class AlgorithmController : Controller
+{
+    private readonly AlgorithmService _algorithmService;
+    private readonly IRepository _repository;
+    private readonly Population _population;
+
+    public AlgorithmController(AlgorithmService algorithmService, IRepository repository, Population population)
     {
-        private readonly AlgorithmService _algorithmService;
-        private readonly IRepository _repository;
-        private readonly Population _population;
-        private readonly FourbrigadePopulation _fourBrigadePopulation;
+        _algorithmService = algorithmService;
+        _repository = repository;
+        _population = population;
+    }
 
-        public AlgorithmController(AlgorithmService algorithmService, IRepository repository,
-            Population population, FourbrigadePopulation fourBrigadePopulation)
+    // Widok początkowy
+    public async Task<IActionResult> Run()
+    {
+        var optimizationParameters = await _repository.GetOptimizationParameterByIdAsync(1);
+
+        var model = new CombinedAlgorithmParameters
         {
-            _algorithmService = algorithmService;
-            _repository = repository;
-            _population = population;
-            _fourBrigadePopulation = fourBrigadePopulation;
-        }
+            OptimizationParametersList = optimizationParameters != null
+                ? new List<OptimizationParameters> { optimizationParameters }
+                : new List<OptimizationParameters> { new OptimizationParameters() },
+            ScheduleParametersList = new List<ScheduleParameters> { new ScheduleParameters() },
+        };
 
-        // Widok początkowy, formularz do wprowadzenia danych
-        public async Task<IActionResult> Run()
-        {
-            // Pobierz zapisane parametry optymalizacji z repozytorium
-            var optimizationParameters = await _repository.GetOptimizationParameterByIdAsync(1); // Zawsze ID = 1
+        return View(model);
+    }
 
-            var model = new CombinedAlgorithmParameters
-            {
-                OptimizationParametersList = optimizationParameters != null
-                    ? new List<OptimizationParameters> { optimizationParameters }
-                    : new List<OptimizationParameters> { new OptimizationParameters() },
-                ScheduleParametersList = new List<ScheduleParameters> { new ScheduleParameters() }, // ScheduleParameters nie są zapisywane w bazie
-            };
-
-            return View(model);
-        }
-
-        // Metoda POST, która dodaje lub aktualizuje parametry optymalizacji w bazie
-        [HttpPost]
+    // Zapisanie parametrów w bazie
+   [HttpPost]
         public async Task<IActionResult> SaveAlgorithmSettings(CombinedAlgorithmParameters model)
         {
             if (!ModelState.IsValid)
             {
+                Console.WriteLine("ModelState nie jest prawidłowy:");
+                foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    Console.WriteLine(error.ErrorMessage);
+                }
+                
                 return View("Run", model);
             }
 
@@ -74,6 +76,9 @@ namespace AG.Controllers
                     existingParameters.MutationFrequency = updatedParameters.MutationFrequency;
                     existingParameters.NumberOfParents = updatedParameters.NumberOfParents;
                     existingParameters.ElitePercentage = updatedParameters.ElitePercentage;
+                    existingParameters.MaxGenerations = updatedParameters.MaxGenerations;
+                    existingParameters.MaxStagnation = updatedParameters.MaxStagnation;
+                    existingParameters.CrossoverPoints = updatedParameters.CrossoverPoints;
 
                     // Aktualizacja w repozytorium
                     await _repository.UpdateOptimizationParameterAsync(existingParameters);
@@ -94,7 +99,9 @@ namespace AG.Controllers
                     PreferenceWeight = 0.5,
                     MutationFrequency = 0.1,
                     NumberOfParents = 2,
-                    ElitePercentage = 0.1
+                    ElitePercentage = 0.1,
+                    MaxGenerations = 500000,
+                    MaxStagnation = 250000
                 };
 
                 await _repository.AddOptimizationParameterAsync(newParameters);
@@ -108,67 +115,51 @@ namespace AG.Controllers
             TempData["Status"] = "Ustawienia zapisane!";
             return RedirectToAction("Run");
         }
+    
 
-        // Metoda POST, która uruchamia algorytm
-        [HttpPost]
-        public async Task<IActionResult> Run(CombinedAlgorithmParameters model)
+    // Uruchomienie algorytmu
+    [HttpPost]
+    public async Task<IActionResult> Run(CombinedAlgorithmParameters model)
+    {
+        if (!ModelState.IsValid)
         {
-            if (!ModelState.IsValid)
-            {
-                return View(); // Jeśli formularz jest niepoprawny, zwróć formularz z błędami
-            }
-
-            ViewBag.Status = "Algorytm w trakcie przetwarzania...";
-
-            // Pobierz parametry optymalizacji z repozytorium
-            var optimizationParameters = await _repository.GetOptimizationParameterByIdAsync(1);
-
-            // Jeśli brak zapisanych parametrów, ustaw domyślne wartości
-            if (optimizationParameters == null)
-            {
-                optimizationParameters = new OptimizationParameters
-                {
-                    OptimizationType = OptimizationType.Roulette,
-                    PopulationSize = 100,
-                    PreferenceWeight = 0.5,
-                    MutationFrequency = 0.1,
-                    NumberOfParents = 2,
-                    ElitePercentage = 0.1
-                };
-            }
-
-            // Parametry harmonogramu z formularza (nie zapisywane w bazie)
-            var scheduleParameters = model.ScheduleParametersList.FirstOrDefault() ?? new ScheduleParameters();
-            
-
-            // Generowanie populacji na podstawie wybranego WorkRegime
-            List<int[,]> population;
-            switch (scheduleParameters.WorkRegime)
-            {
-                case WorkRegime.FlexibleWorkTime:
-                    population = _population.GenerateInitialPopulation(
-                        optimizationParameters.PopulationSize,
-                        scheduleParameters.NumberOfWorkers,
-                        scheduleParameters.DaysInWeek);
-                    break;
-
-                case WorkRegime.Fourbrigade:
-                    population = _fourBrigadePopulation.GenerateInitialPopulation(
-                        optimizationParameters.PopulationSize,
-                        scheduleParameters.NumberOfWorkers,
-                        scheduleParameters.DaysInWeek);
-                    break;
-
-                default:
-                    throw new InvalidOperationException("Nieobsługiwany tryb pracy.");
-            }
-
-            // Przekazanie parametrów do algorytmu
-            var result = await Task.Run(() =>
-                _algorithmService.RunAlgorithm(optimizationParameters, scheduleParameters, scheduleParameters.WorkRegime, employeePreference: null));
-
-            // Zwracanie wyniku do widoku "Result"
-            return View("Result", result);
+            TempData["Error"] = "Nieprawidłowe dane wejściowe.";
+            return View("Run", model);
         }
+        
+
+        var optimizationParameters = await _repository.GetOptimizationParameterByIdAsync(1)
+                                      ?? new OptimizationParameters
+                                      {
+                                          OptimizationType = OptimizationType.Roulette,
+                                          PopulationSize = 100,
+                                          PreferenceWeight = 0.5,
+                                          MutationFrequency = 0.1,
+                                          NumberOfParents = 2,
+                                          ElitePercentage = 0.1,
+                                          MaxGenerations = 100000,
+                                          MaxStagnation = 1000,
+                                          CrossoverPoints = 6
+                                      };
+
+        var scheduleParameters = model.ScheduleParametersList.FirstOrDefault()
+                                 ?? new ScheduleParameters();
+
+        var initialPopulation = _population.GenerateInitialPopulation(
+            optimizationParameters.PopulationSize,
+            scheduleParameters.NumberOfWorkers,
+            scheduleParameters.DaysInWeek);
+        
+        
+
+        var result = await Task.Run(() =>
+            _algorithmService.RunAlgorithm(
+                optimizationParameters,
+                scheduleParameters,
+                employeePreference: null // Możesz dodać obsługę preferencji, jeśli jest taka potrzeba
+            ));
+
+        return View("Result", result);
     }
+}
 }
