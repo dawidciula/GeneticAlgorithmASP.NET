@@ -1,6 +1,62 @@
 {
   "Worker1": {
     "Shifts": {
+      "Monday": "off",
+      "Tuesday": "off",
+      "Wednesday": "off",
+      "Thursday": "off",
+      "Friday": "off",
+      "Saturday": "off",
+      "Sunday": "none"
+    },
+    "MaxWorkDays": 0,
+    "MinDaysOff": 0,
+    "PreferredColleagues": "none"
+  },
+  "Worker2": {
+    "Shifts": {
+      "Monday": "off",
+      "Tuesday": "off",
+      "Wednesday": "off",
+      "Thursday": "off",
+      "Friday": "off",
+      "Saturday": "off",
+      "Sunday": "none"
+    },
+    "MaxWorkDays": 0,
+    "MinDaysOff": 0,
+    "PreferredColleagues": "none"
+  },
+  "Worker3": {
+    "Shifts": {
+      "Monday": "off",
+      "Tuesday": "off",
+      "Wednesday": "off",
+      "Thursday": "off",
+      "Friday": "off",
+      "Saturday": "off",
+      "Sunday": "none"
+    },
+    "MaxWorkDays": 0,
+    "MinDaysOff": 0,
+    "PreferredColleagues": "none"
+  },
+  "Worker4": {
+    "Shifts": {
+      "Monday": "off",
+      "Tuesday": "off",
+      "Wednesday": "off",
+      "Thursday": "off",
+      "Friday": "off",
+      "Saturday": "off",
+      "Sunday": "none"
+    },
+    "MaxWorkDays": 0,
+    "MinDaysOff": 0,
+    "PreferredColleagues": "none"
+  },
+  "Worker5": {
+    "Shifts": {
       "Monday": "none",
       "Tuesday": "none",
       "Wednesday": "none",
@@ -13,12 +69,96 @@
     "MinDaysOff": 0,
     "PreferredColleagues": "none"
   },
-  "Worker2": {
+  "Worker6": {
     "Shifts": {
       "Monday": "none",
       "Tuesday": "none",
-      "Wednesday": "1",
-      "Thursday": "1",
+      "Wednesday": "none",
+      "Thursday": "none",
+      "Friday": "none",
+      "Saturday": "none",
+      "Sunday": "none"
+    },
+    "MaxWorkDays": 0,
+    "MinDaysOff": 0,
+    "PreferredColleagues": "none"
+  },
+  "Worker7": {
+    "Shifts": {
+      "Monday": "none",
+      "Tuesday": "none",
+      "Wednesday": "none",
+      "Thursday": "none",
+      "Friday": "none",
+      "Saturday": "none",
+      "Sunday": "none"
+    },
+    "MaxWorkDays": 0,
+    "MinDaysOff": 0,
+    "PreferredColleagues": "none"
+  },
+  "Worker8": {
+    "Shifts": {
+      "Monday": "none",
+      "Tuesday": "none",
+      "Wednesday": "none",
+      "Thursday": "none",
+      "Friday": "none",
+      "Saturday": "none",
+      "Sunday": "none"
+    },
+    "MaxWorkDays": 0,
+    "MinDaysOff": 0,
+    "PreferredColleagues": "none"
+  },
+  "Worker9": {
+    "Shifts": {
+      "Monday": "none",
+      "Tuesday": "none",
+      "Wednesday": "none",
+      "Thursday": "none",
+      "Friday": "none",
+      "Saturday": "none",
+      "Sunday": "none"
+    },
+    "MaxWorkDays": 0,
+    "MinDaysOff": 0,
+    "PreferredColleagues": "none"
+  },
+  "Worker10": {
+    "Shifts": {
+      "Monday": "none",
+      "Tuesday": "none",
+      "Wednesday": "none",
+      "Thursday": "none",
+      "Friday": "none",
+      "Saturday": "none",
+      "Sunday": "none"
+    },
+    "MaxWorkDays": 0,
+    "MinDaysOff": 0,
+    "PreferredColleagues": "none"
+  },
+  "Worker11": {
+    "Shifts": {
+      "Monday": "none",
+      "Tuesday": "none",
+      "Wednesday": "none",
+      "Thursday": "none",
+      "Friday": "none",
+      "Saturday": "none",
+      "Sunday": "none"
+    },
+    "MaxWorkDays": 0,
+    "MinDaysOff": 0,
+    "PreferredColleagues": "none"
+  },
+  "Worker12": {
+    "Shifts": {
+      "Monday": "none",
+      "Tuesday": "none",
+      "Wednesday": "none",
+      "Thursday": "none",
       "Friday": "none",
       "Saturday": "none",
       "Sunday": "none"
