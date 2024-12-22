@@ -43,24 +43,52 @@ public class AlgorithmController : Controller
         }
         
         [HttpPost]
-        public IActionResult SaveEmployeePreferences([FromBody] Dictionary<string, Dictionary<string, string>> preferences)
+        public IActionResult SaveEmployeePreferences([FromBody] Dictionary<string, EmployeePreferences> preferences)
         {
+            // Logowanie otrzymanych danych w konsoli, żeby sprawdzić co przychodzi
+            Console.WriteLine("Otrzymane dane preferencji:");
+            try
+            {
+                var preferencesJson = JsonSerializer.Serialize(preferences, new JsonSerializerOptions { WriteIndented = true });
+                Console.WriteLine(preferencesJson);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Błąd podczas serializacji danych wejściowych: {ex.Message}");
+                return StatusCode(400, "Błąd przy serializacji danych wejściowych.");
+            }
+
+            // Sprawdzenie czy dane zostały poprawnie przesłane
             if (preferences == null)
             {
+                Console.WriteLine("Dane są null.");
                 return BadRequest("Nieprawidłowy format danych.");
             }
 
-            // Wyświetlenie danych w konsoli
-            Console.WriteLine("Preferencje pracowników:");
+            // Iteracja po pracownikach w słowniku
             foreach (var worker in preferences)
             {
                 Console.WriteLine($"Pracownik: {worker.Key}");
 
-                // Iteracja po preferencjach dla każdego pracownika
-                foreach (var preference in worker.Value)
+                // Logowanie preferencji dla każdego pracownika
+                try
                 {
-                    Console.WriteLine($"{preference.Key}: {preference.Value}");
+                    var shifts = worker.Value.Shifts;
+                    Console.WriteLine($"Monday: {shifts.Monday}");
+                    Console.WriteLine($"Tuesday: {shifts.Tuesday}");
+                    Console.WriteLine($"Wednesday: {shifts.Wednesday}");
+                    Console.WriteLine($"Thursday: {shifts.Thursday}");
+                    Console.WriteLine($"Friday: {shifts.Friday}");
+                    Console.WriteLine($"Saturday: {shifts.Saturday}");
+                    Console.WriteLine($"Sunday: {shifts.Sunday}");
                 }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Błąd podczas przetwarzania Shifts dla pracownika {worker.Key}: {ex.Message}");
+                }
+
+                // Logowanie pozostałych preferencji
+                Console.WriteLine($"MaxWorkDays: {worker.Value.MaxWorkDays}, MinDaysOff: {worker.Value.MinDaysOff}, PreferredColleagues: {worker.Value.PreferredColleagues}");
             }
 
             // Ścieżka do pliku, w którym zapisujemy dane

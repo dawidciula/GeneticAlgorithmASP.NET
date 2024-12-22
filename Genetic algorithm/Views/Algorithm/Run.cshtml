@@ -339,15 +339,17 @@
            
                for (let i = 1; i <= numberOfWorkers; i++) {
                    const workerPreferences = {
-                       PreferredMonday: document.querySelector(`#Worker${i}MondayShift`).value || 'none',
-                       PreferredTuesday: document.querySelector(`#Worker${i}TuesdayShift`).value || 'none',
-                       PreferredWednesday: document.querySelector(`#Worker${i}WednesdayShift`)?.value || 'none',
-                       PreferredThursday: document.querySelector(`#Worker${i}ThursdayShift`)?.value || 'none',
-                       PreferredFriday: document.querySelector(`#Worker${i}FridayShift`)?.value || 'none',
-                       PreferredSaturday: document.querySelector(`#Worker${i}SaturdayShift`)?.value || 'none',
-                       PreferredSunday: document.querySelector(`#Worker${i}SundayShift`)?.value || 'none',
-                       MaxWorkDays: document.querySelector(`#Worker${i}MaxWorkDays`).value || 'none',
-                       MinDaysOff: document.querySelector(`#Worker${i}MinDaysOff`).value || 'none',
+                       Shifts: {
+                           Monday: document.querySelector(`#Worker${i}MondayShift`).value || 'none',
+                           Tuesday: document.querySelector(`#Worker${i}TuesdayShift`).value || 'none',
+                           Wednesday: document.querySelector(`#Worker${i}WednesdayShift`).value || 'none',
+                           Thursday: document.querySelector(`#Worker${i}ThursdayShift`).value || 'none',
+                           Friday: document.querySelector(`#Worker${i}FridayShift`).value || 'none',
+                           Saturday: document.querySelector(`#Worker${i}SaturdayShift`).value || 'none',
+                           Sunday: document.querySelector(`#Worker${i}SundayShift`).value || 'none'
+                       },
+                       MaxWorkDays: document.querySelector(`#Worker${i}MaxWorkDays`).value || 0,
+                       MinDaysOff: document.querySelector(`#Worker${i}MinDaysOff`).value || 0,
                        PreferredColleagues: document.querySelector(`#Worker${i}PreferredColleagues`).value || 'none'
                    };
                    preferences[`Worker${i}`] = workerPreferences;
@@ -381,5 +383,6 @@
            
                preferencesModal.hide(); // Zamknięcie modala
            });
+
 
 </script>
