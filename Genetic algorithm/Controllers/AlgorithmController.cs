@@ -3,6 +3,8 @@ using AG.Models;
 using AG.Services;
 using Genetic_algorithm.Models;
 using Genetic_algorithm.Repository;
+using System.IO;
+using System.Text.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,37 +12,83 @@ using System.Threading.Tasks;
 
 namespace AG.Controllers
 {
-    public class AlgorithmController : Controller
-{
-    private readonly AlgorithmService _algorithmService;
-    private readonly IRepository _repository;
-    private readonly Population _population;
-
-    public AlgorithmController(AlgorithmService algorithmService, IRepository repository, Population population)
+public class AlgorithmController : Controller
     {
-        _algorithmService = algorithmService;
-        _repository = repository;
-        _population = population;
-    }
+        private readonly AlgorithmService _algorithmService;
+        private readonly Population _population;
+        private readonly IRepository _repository;  // Zakładam, że jest to potrzebne
 
-    // Widok początkowy
-    public async Task<IActionResult> Run()
-    {
-        var optimizationParameters = await _repository.GetOptimizationParameterByIdAsync(1);
-
-        var model = new CombinedAlgorithmParameters
+        public AlgorithmController(AlgorithmService algorithmService, IRepository repository, Population population)
         {
-            OptimizationParametersList = optimizationParameters != null
-                ? new List<OptimizationParameters> { optimizationParameters }
-                : new List<OptimizationParameters> { new OptimizationParameters() },
-            ScheduleParametersList = new List<ScheduleParameters> { new ScheduleParameters() },
-        };
+            _algorithmService = algorithmService;
+            _repository = repository;
+            _population = population;
+        }
 
-        return View(model);
-    }
+        // Widok początkowy
+        public async Task<IActionResult> Run()
+        {
+            var optimizationParameters = await _repository.GetOptimizationParameterByIdAsync(1);
 
-    // Zapisanie parametrów w bazie
-   [HttpPost]
+            var model = new CombinedAlgorithmParameters
+            {
+                OptimizationParametersList = optimizationParameters != null
+                    ? new List<OptimizationParameters> { optimizationParameters }
+                    : new List<OptimizationParameters> { new OptimizationParameters() },
+                ScheduleParametersList = new List<ScheduleParameters> { new ScheduleParameters() },
+                EmployeePreferencesList = new List<EmployeePreferences> { new EmployeePreferences() }
+            };
+
+            return View(model);
+        }
+        
+        [HttpPost]
+        public IActionResult SaveEmployeePreferences([FromBody] Dictionary<string, Dictionary<string, string>> preferences)
+        {
+            if (preferences == null)
+            {
+                return BadRequest("Nieprawidłowy format danych.");
+            }
+
+            // Wyświetlenie danych w konsoli
+            Console.WriteLine("Preferencje pracowników:");
+            foreach (var worker in preferences)
+            {
+                Console.WriteLine($"Pracownik: {worker.Key}");
+
+                // Iteracja po preferencjach dla każdego pracownika
+                foreach (var preference in worker.Value)
+                {
+                    Console.WriteLine($"{preference.Key}: {preference.Value}");
+                }
+            }
+
+            // Ścieżka do pliku, w którym zapisujemy dane
+            string filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "preferences.json");
+
+            // Serializowanie danych do JSON
+            var jsonString = JsonSerializer.Serialize(preferences, new JsonSerializerOptions { WriteIndented = true });
+
+            try
+            {
+                // Zapisywanie danych do pliku
+                System.IO.File.WriteAllText(filePath, jsonString);
+                Console.WriteLine($"Preferencje zostały zapisane do pliku: {filePath}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Wystąpił błąd podczas zapisywania do pliku: {ex.Message}");
+                return StatusCode(500, "Błąd podczas zapisywania preferencji do pliku.");
+            }
+
+            // Zwracamy odpowiedź, że preferencje zostały zapisane
+            return Ok("Preferencje zostały odebrane i zapisane do pliku.");
+        }
+        
+        
+
+        // Zapisanie parametrów algorytmu w bazie
+        [HttpPost]
         public async Task<IActionResult> SaveAlgorithmSettings(CombinedAlgorithmParameters model)
         {
             if (!ModelState.IsValid)
@@ -50,7 +98,7 @@ namespace AG.Controllers
                 {
                     Console.WriteLine(error.ErrorMessage);
                 }
-                
+
                 return View("Run", model);
             }
 
@@ -61,7 +109,8 @@ namespace AG.Controllers
             Console.WriteLine("Dane przesłane z formularza:");
             foreach (var param in model.OptimizationParametersList)
             {
-                Console.WriteLine($"OptimizationType={param.OptimizationType}, PopulationSize={param.PopulationSize}, PreferenceWeight={param.PreferenceWeight}, MutationFrequency={param.MutationFrequency}, NumberOfParents={param.NumberOfParents}, ElitePercentage={param.ElitePercentage}");
+                Console.WriteLine(
+                    $"OptimizationType={param.OptimizationType}, PopulationSize={param.PopulationSize}, PreferenceWeight={param.PreferenceWeight}, MutationFrequency={param.MutationFrequency}, NumberOfParents={param.NumberOfParents}, ElitePercentage={param.ElitePercentage}");
             }
 
             // Jeśli rekord istnieje, zaktualizuj dane
@@ -85,7 +134,8 @@ namespace AG.Controllers
 
                     // Logowanie po aktualizacji
                     Console.WriteLine("Zaktualizowano parametry:");
-                    Console.WriteLine($"OptimizationType={existingParameters.OptimizationType}, PopulationSize={existingParameters.PopulationSize}, PreferenceWeight={existingParameters.PreferenceWeight}, MutationFrequency={existingParameters.MutationFrequency}, NumberOfParents={existingParameters.NumberOfParents}, ElitePercentage={existingParameters.ElitePercentage}");
+                    Console.WriteLine(
+                        $"OptimizationType={existingParameters.OptimizationType}, PopulationSize={existingParameters.PopulationSize}, PreferenceWeight={existingParameters.PreferenceWeight}, MutationFrequency={existingParameters.MutationFrequency}, NumberOfParents={existingParameters.NumberOfParents}, ElitePercentage={existingParameters.ElitePercentage}");
                 }
             }
             else
@@ -108,58 +158,57 @@ namespace AG.Controllers
 
                 // Logowanie po dodaniu nowych danych
                 Console.WriteLine("Dodano nowe parametry:");
-                Console.WriteLine($"OptimizationType={newParameters.OptimizationType}, PopulationSize={newParameters.PopulationSize}, PreferenceWeight={newParameters.PreferenceWeight}, MutationFrequency={newParameters.MutationFrequency}, NumberOfParents={newParameters.NumberOfParents}, ElitePercentage={newParameters.ElitePercentage}");
+                Console.WriteLine(
+                    $"OptimizationType={newParameters.OptimizationType}, PopulationSize={newParameters.PopulationSize}, PreferenceWeight={newParameters.PreferenceWeight}, MutationFrequency={newParameters.MutationFrequency}, NumberOfParents={newParameters.NumberOfParents}, ElitePercentage={newParameters.ElitePercentage}");
             }
 
             // Przekierowanie na stronę główną
             TempData["Status"] = "Ustawienia zapisane!";
             return RedirectToAction("Run");
         }
-    
 
-    // Uruchomienie algorytmu
-    [HttpPost]
-    public async Task<IActionResult> Run(CombinedAlgorithmParameters model)
-    {
-        if (!ModelState.IsValid)
+        // Uruchomienie algorytmu
+        [HttpPost]
+        public async Task<IActionResult> Run(CombinedAlgorithmParameters model)
         {
-            TempData["Error"] = "Nieprawidłowe dane wejściowe.";
-            return View("Run", model);
+            if (!ModelState.IsValid)
+            {
+                TempData["Error"] = "Nieprawidłowe dane wejściowe.";
+                return View("Run", model);
+            }
+
+            var optimizationParameters = await _repository.GetOptimizationParameterByIdAsync(1)
+                                         ?? new OptimizationParameters
+                                         {
+                                             OptimizationType = OptimizationType.Roulette,
+                                             PopulationSize = 100,
+                                             PreferenceWeight = 0.5,
+                                             MutationFrequency = 0.1,
+                                             NumberOfParents = 2,
+                                             ElitePercentage = 0.1,
+                                             MaxGenerations = 100000,
+                                             MaxStagnation = 1000,
+                                             CrossoverPoints = 6
+                                         };
+
+            var scheduleParameters = model.ScheduleParametersList.FirstOrDefault()
+                                     ?? new ScheduleParameters();
+
+            var initialPopulation = _population.GenerateInitialPopulation(
+                optimizationParameters.PopulationSize,
+                scheduleParameters.NumberOfWorkers,
+                scheduleParameters.DaysInWeek);
+
+            var result = await Task.Run(() =>
+                _algorithmService.RunAlgorithm(
+                    optimizationParameters,
+                    scheduleParameters
+                ));
+
+            return View("Result", result);
         }
-        
 
-        var optimizationParameters = await _repository.GetOptimizationParameterByIdAsync(1)
-                                      ?? new OptimizationParameters
-                                      {
-                                          OptimizationType = OptimizationType.Roulette,
-                                          PopulationSize = 100,
-                                          PreferenceWeight = 0.5,
-                                          MutationFrequency = 0.1,
-                                          NumberOfParents = 2,
-                                          ElitePercentage = 0.1,
-                                          MaxGenerations = 100000,
-                                          MaxStagnation = 1000,
-                                          CrossoverPoints = 6
-                                      };
 
-        var scheduleParameters = model.ScheduleParametersList.FirstOrDefault()
-                                 ?? new ScheduleParameters();
 
-        var initialPopulation = _population.GenerateInitialPopulation(
-            optimizationParameters.PopulationSize,
-            scheduleParameters.NumberOfWorkers,
-            scheduleParameters.DaysInWeek);
-        
-        
-
-        var result = await Task.Run(() =>
-            _algorithmService.RunAlgorithm(
-                optimizationParameters,
-                scheduleParameters,
-                employeePreference: null // Możesz dodać obsługę preferencji, jeśli jest taka potrzeba
-            ));
-
-        return View("Result", result);
     }
-}
 }

@@ -1,0 +1,62 @@
+{
+  "Worker1": {
+    "PreferredMonday": "none",
+    "PreferredTuesday": "2",
+    "PreferredWednesday": "2",
+    "PreferredThursday": "none",
+    "PreferredFriday": "none",
+    "PreferredSaturday": "1",
+    "PreferredSunday": "none",
+    "MaxWorkDays": "none",
+    "MinDaysOff": "none",
+    "PreferredColleagues": "none"
+  },
+  "Worker2": {
+    "PreferredMonday": "none",
+    "PreferredTuesday": "none",
+    "PreferredWednesday": "none",
+    "PreferredThursday": "none",
+    "PreferredFriday": "1",
+    "PreferredSaturday": "none",
+    "PreferredSunday": "none",
+    "MaxWorkDays": "none",
+    "MinDaysOff": "none",
+    "PreferredColleagues": "none"
+  },
+  "Worker3": {
+    "PreferredMonday": "none",
+    "PreferredTuesday": "1",
+    "PreferredWednesday": "none",
+    "PreferredThursday": "none",
+    "PreferredFriday": "none",
+    "PreferredSaturday": "none",
+    "PreferredSunday": "none",
+    "MaxWorkDays": "none",
+    "MinDaysOff": "none",
+    "PreferredColleagues": "none"
+  },
+  "Worker4": {
+    "PreferredMonday": "1",
+    "PreferredTuesday": "none",
+    "PreferredWednesday": "none",
+    "PreferredThursday": "none",
+    "PreferredFriday": "none",
+    "PreferredSaturday": "none",
+    "PreferredSunday": "none",
+    "MaxWorkDays": "none",
+    "MinDaysOff": "none",
+    "PreferredColleagues": "none"
+  },
+  "Worker5": {
+    "PreferredMonday": "none",
+    "PreferredTuesday": "none",
+    "PreferredWednesday": "none",
+    "PreferredThursday": "none",
+    "PreferredFriday": "none",
+    "PreferredSaturday": "none",
+    "PreferredSunday": "none",
+    "MaxWorkDays": "none",
+    "MinDaysOff": "none",
+    "PreferredColleagues": "none"
+  }
+}

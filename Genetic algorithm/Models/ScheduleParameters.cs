@@ -1,3 +1,5 @@
+using AG.Models;
+
 namespace Genetic_algorithm.Models;
 
 public enum WorkRegime
@@ -15,4 +17,5 @@ public class ScheduleParameters
     public int MorningShiftWorkers { get; set; }
     public int AfternoonShiftWorkers { get; set; }
     public int NightShiftWorkers { get; set; }
+    public List<EmployeePreferences> WorkerPreferences { get; set; } = new List<EmployeePreferences>();
 }

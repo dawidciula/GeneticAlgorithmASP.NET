@@ -1,46 +1,81 @@
 using System;
 using System.Collections.Generic;
+using Genetic_algorithm.Models;
 
 namespace AG.Services
 {
     public class FitnessService
     {
-        public double CalculateFitness(int[,] schedule, List<int[]> employeePreferences)
+        public double CalculateFitness(
+            int[,] schedule, 
+            List<int[]> employeePreferences, 
+            ScheduleParameters scheduleParameters)
         {
             double fitness = 0.0;
             int numberOfWorkers = schedule.GetLength(0);
             int daysInWeek = schedule.GetLength(1);
-            int targetWorkersPerShift = numberOfWorkers / 4; // 12 pracowników, 4 zmiany -> 12/4 = 3 pracowników na każdą zmianę
 
-            // Sekcja oceniająca równomierność przypisania pracowników do zmian
+            // Parametry zmian z ScheduleParameters
+            int morningShiftWorkers = scheduleParameters.MorningShiftWorkers;
+            int afternoonShiftWorkers = scheduleParameters.AfternoonShiftWorkers;
+            int nightShiftWorkers = scheduleParameters.NightShiftWorkers;
+
+            // Sekcja oceniająca liczbę pracowników przypisanych do każdej zmiany
             for (int day = 0; day < daysInWeek; day++)
             {
-                int[] shiftCounts = new int[4]; // Liczba pracowników przypisanych do każdej zmiany (0-3)
+                int morningShiftCount = 0;
+                int afternoonShiftCount = 0;
+                int nightShiftCount = 0;
 
-                // Zliczanie liczby pracowników przypisanych do każdej zmiany w danym dniu
+                // Zliczanie pracowników przypisanych do poszczególnych zmian
                 for (int worker = 0; worker < numberOfWorkers; worker++)
                 {
-                    shiftCounts[schedule[worker, day]]++;
+                    int assignedShift = schedule[worker, day];
+                    switch (assignedShift)
+                    {
+                        case 1: // Poranna zmiana
+                            morningShiftCount++;
+                            break;
+                        case 2: // Popołudniowa zmiana
+                            afternoonShiftCount++;
+                            break;
+                        case 3: // Nocna zmiana
+                            nightShiftCount++;
+                            break;
+                    }
                 }
 
-                // Przyznawanie punktów za każdą zmianę, która ma dokładnie 3 pracowników
-                for (int shift = 0; shift < 4; shift++) // Zmiany są od 0 do 3
+                // Dodawanie punktów za zgodność liczby pracowników ze zmianami
+                if (morningShiftCount == morningShiftWorkers)
+                    fitness += 10; // Idealna liczba pracowników na porannej zmianie
+                else
+                    fitness -= Math.Abs(morningShiftCount - morningShiftWorkers); // Kara za odchylenie
+
+                if (afternoonShiftCount == afternoonShiftWorkers)
+                    fitness += 10; // Idealna liczba pracowników na popołudniowej zmianie
+                else
+                    fitness -= Math.Abs(afternoonShiftCount - afternoonShiftWorkers); // Kara za odchylenie
+
+                if (nightShiftCount == nightShiftWorkers)
+                    fitness += 10; // Idealna liczba pracowników na nocnej zmianie
+                else
+                    fitness -= Math.Abs(nightShiftCount - nightShiftWorkers); // Kara za odchylenie
+
+                // Sprawdzanie, czy reszta pracowników ma dzień wolny
+                int totalAssignedWorkers = morningShiftCount + afternoonShiftCount + nightShiftCount;
+                if (totalAssignedWorkers > morningShiftWorkers + afternoonShiftWorkers + nightShiftWorkers)
                 {
-                    if (shiftCounts[shift] == targetWorkersPerShift)
-                    {
-                        fitness += 10; // Dodaj 10 punktów, jeśli zmiana ma dokładnie 3 pracowników
-                    }
+                    fitness -= (totalAssignedWorkers - (morningShiftWorkers + afternoonShiftWorkers + nightShiftWorkers)) * 5; 
+                    // Kara za nadmiar pracowników przypisanych do zmian
                 }
             }
 
             // Ocena zgodności harmonogramu z preferencjami pracowników
             for (int worker = 0; worker < numberOfWorkers; worker++)
             {
-                // Sprawdzamy, czy preferencje pracownika są null
                 var preferences = employeePreferences[worker];
-                if (preferences == null) continue; // Jeśli brak preferencji, pomijamy tego pracownika
+                if (preferences == null) continue;
 
-                // Pracownik z null preferencjami nie jest brany pod uwagę
                 for (int day = 0; day < daysInWeek; day++)
                 {
                     int assignedShift = schedule[worker, day];
@@ -48,32 +83,27 @@ namespace AG.Services
 
                     if (preferredShift == assignedShift)
                     {
-                        // Przyznaj punkty, jeśli przypisana zmiana odpowiada preferencji pracownika
-                        fitness += 5; // 5 punktów za zgodność z preferencjami
+                        fitness += 5; // Zgodność preferencji
                     }
                     else if (preferredShift == 0 && assignedShift != 0)
                     {
-                        // Jeśli preferowany dzień wolny (0) i pracownik jest przypisany do zmiany, odejmujemy punkty
-                        fitness -= 3; // -3 punkty za brak dnia wolnego
+                        fitness -= 3; // Brak dnia wolnego zgodnego z preferencjami
                     }
                 }
             }
 
-            // Sprawdzanie, czy po nocnej zmianie (3) przypisana jest tylko nocna zmiana (3) lub dzień wolny (0)
+            // Reguła nocnych zmian
             for (int worker = 0; worker < numberOfWorkers; worker++)
             {
-                for (int day = 1; day < daysInWeek; day++) // Zaczynamy od dnia 1, bo nie ma poprzedniego dnia dla dnia 0
+                for (int day = 1; day < daysInWeek; day++)
                 {
                     if (schedule[worker, day - 1] == 3 && schedule[worker, day] != 3 && schedule[worker, day] != 0)
                     {
-                        // Jeśli poprzedni dzień to nocna zmiana (3) a obecny dzień nie jest ani nocną zmianą (3), ani dniem wolnym (0),
-                        // odejmujemy punkty (np. -10 punktów za złamanie reguły).
-                        fitness -= 10; // -10 punktów za naruszenie zasady
+                        fitness -= 10; // Naruszenie reguły nocnych zmian
                     }
                 }
             }
 
-            // Funkcja zwraca ostateczny wynik
             return fitness;
         }
     }

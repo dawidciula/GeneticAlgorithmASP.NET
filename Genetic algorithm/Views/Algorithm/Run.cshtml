@@ -329,9 +329,57 @@
            });
        
            // Obsługa zapisania preferencji
-           document.getElementById('PreferencesForm').addEventListener('submit', (e) => {
-               e.preventDefault();
-               preferencesModal.hide();
-               alert('Preferencje zostały zapisane!');
+           document.getElementById('PreferencesForm').addEventListener('submit', async (e) => {
+               e.preventDefault(); // Zatrzymanie domyślnego zachowania formularza
+               preferencesModal.hide(); // Zamknięcie modala
+           
+               // Zbieranie danych preferencji
+               const preferences = {};
+               const numberOfWorkers = parseInt(numberOfWorkersInput.value);
+           
+               for (let i = 1; i <= numberOfWorkers; i++) {
+                   const workerPreferences = {
+                       PreferredMonday: document.querySelector(`#Worker${i}MondayShift`).value || 'none',
+                       PreferredTuesday: document.querySelector(`#Worker${i}TuesdayShift`).value || 'none',
+                       PreferredWednesday: document.querySelector(`#Worker${i}WednesdayShift`)?.value || 'none',
+                       PreferredThursday: document.querySelector(`#Worker${i}ThursdayShift`)?.value || 'none',
+                       PreferredFriday: document.querySelector(`#Worker${i}FridayShift`)?.value || 'none',
+                       PreferredSaturday: document.querySelector(`#Worker${i}SaturdayShift`)?.value || 'none',
+                       PreferredSunday: document.querySelector(`#Worker${i}SundayShift`)?.value || 'none',
+                       MaxWorkDays: document.querySelector(`#Worker${i}MaxWorkDays`).value || 'none',
+                       MinDaysOff: document.querySelector(`#Worker${i}MinDaysOff`).value || 'none',
+                       PreferredColleagues: document.querySelector(`#Worker${i}PreferredColleagues`).value || 'none'
+                   };
+                   preferences[`Worker${i}`] = workerPreferences;
+               }
+           
+               // Konwersja danych na format JSON
+               const preferencesJson = JSON.stringify(preferences);
+           
+               // Wyświetlanie danych w konsoli (możesz je wysłać do serwera)
+               console.log(preferencesJson);
+           
+               try {
+                   // Wysyłanie danych do serwera
+                   const response = await fetch('/Algorithm/SaveEmployeePreferences', {
+                       method: 'POST',
+                       headers: {
+                           'Content-Type': 'application/json' // Określamy, że wysyłamy dane w formacie JSON
+                       },
+                       body: preferencesJson // Wysyłamy dane w formacie JSON
+                   });
+           
+                   if (response.ok) {
+                       alert('Preferencje zostały zapisane!');
+                   } else {
+                       alert('Wystąpił błąd podczas zapisywania preferencji.');
+                   }
+               } catch (error) {
+                   console.error('Błąd podczas wysyłania danych:', error);
+                   alert('Wystąpił błąd podczas łączenia z serwerem.');
+               }
+           
+               preferencesModal.hide(); // Zamknięcie modala
            });
+
 </script>

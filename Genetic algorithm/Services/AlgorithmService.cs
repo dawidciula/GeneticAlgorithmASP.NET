@@ -27,7 +27,7 @@ namespace AG.Services
             _bestFitness = 0.0;
         }
 
-        public ScheduleResult RunAlgorithm(OptimizationParameters optimizationParameters, ScheduleParameters scheduleParameters, EmployeePreference employeePreference)
+        public ScheduleResult RunAlgorithm(OptimizationParameters optimizationParameters, ScheduleParameters scheduleParameters)
         {
             // Parametry ustawione na sztywno
             int populationSize = optimizationParameters.PopulationSize;
@@ -85,7 +85,7 @@ namespace AG.Services
             for (int generation = 0; generation < maxGenerations; generation++)
             {
                 // Obliczanie fitness
-                var fitness = population.Select(schedule => _fitnessService.CalculateFitness(schedule, employeePreferences)).ToArray();
+                var fitness = population.Select(schedule => _fitnessService.CalculateFitness(schedule, employeePreferences, scheduleParameters)).ToArray();
 
 
                 // Sprawdzenie poprawności tablicy fitness przed jej użyciem
