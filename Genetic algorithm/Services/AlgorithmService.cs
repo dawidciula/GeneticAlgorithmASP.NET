@@ -30,12 +30,12 @@ namespace AG.Services
         public ScheduleResult RunAlgorithm(OptimizationParameters optimizationParameters, ScheduleParameters scheduleParameters, List<int[]> employeePreferences)
         {
             // Logowanie preferencji pracowników
-            Console.WriteLine("Lista preferencji pracowników:");
-            for (int i = 0; i < employeePreferences.Count; i++)
-            {
-                Console.WriteLine($"Pracownik {i + 1}: {string.Join(", ", employeePreferences[i])}");
-            }
-            // Parametry ustawione na sztywno
+            //Console.WriteLine("Lista preferencji pracowników:");
+            //for (int i = 0; i < employeePreferences.Count; i++)
+            //{
+            //    Console.WriteLine($"Pracownik {i + 1}: {string.Join(", ", employeePreferences[i])}");
+            ///}
+            // Parametry
             int populationSize = optimizationParameters.PopulationSize;
             int numberOfWorkers = scheduleParameters.NumberOfWorkers;
             int daysInWeek = 7;
@@ -61,12 +61,10 @@ namespace AG.Services
            
 
             var random = new Random();
-            // Wybór populacji na podstawie WorkRegime
+       
             List<int[,]> population;
             population = _population.GenerateInitialPopulation(populationSize, numberOfWorkers, daysInWeek);
             
-            
-          
             int generationsWithoutImprovement = 0;
 
             for (int generation = 0; generation < maxGenerations; generation++)
@@ -97,11 +95,11 @@ namespace AG.Services
                 }
                 
                 // Logowanie najlepszej wartości fitness oraz liczby wygenerowanych harmonogramów
-                //Console.WriteLine($"Generacja {generation + 1}:");
-                //Console.WriteLine($"  Najlepsza wartość fitness: {_bestFitness}");
-                //Console.WriteLine($"  Liczba wygenerowanych harmonogramów: {population.Count}");
-                //Console.WriteLine($"  Liczba osobników w populacji: {population.Count}");
-                //Console.WriteLine($"  Liczba rodziców: {numberOfParents}");
+                Console.WriteLine($"Generacja {generation + 1}:");
+                Console.WriteLine($"  Najlepsza wartość fitness: {_bestFitness}");
+                Console.WriteLine($"  Liczba wygenerowanych harmonogramów: {population.Count}");
+                Console.WriteLine($"  Liczba osobników w populacji: {population.Count}");
+                Console.WriteLine($"  Liczba rodziców: {numberOfParents}");
 
                 // Sprawdzenie warunku stagnacji
                 if (generationsWithoutImprovement >= maxStagnation)

@@ -113,8 +113,7 @@ public class AlgorithmController : Controller
             return Ok("Preferencje zostały odebrane i zapisane do pliku.");
         }
         
-
-[HttpGet]
+        [HttpGet]
         public IActionResult LoadEmployeePreferences()
         {
             // Ścieżka do pliku JSON z preferencjami
@@ -148,32 +147,34 @@ public class AlgorithmController : Controller
                 // Iteracja po pracownikach
                 foreach (var worker in preferencesList)
                 {
-                    if (worker.Value?.Shifts != null)
+                    // Pobieramy dane pracownika
+                    var shifts = worker.Value?.Shifts;
+                    var maxWorkDays = worker.Value?.MaxWorkDays ?? 0;  // Wartość MaxWorkDays
+                    var minDaysOff = worker.Value?.MinDaysOff ?? 0;   // Wartość MinDaysOff
+
+                    // Tworzymy tablicę dla dni tygodnia z zamianą null i "none" na -1
+                    var shiftArray = new int[]
                     {
-                        var shifts = worker.Value.Shifts;
+                        ParseShift(shifts?.Monday) ?? -1,
+                        ParseShift(shifts?.Tuesday) ?? -1,
+                        ParseShift(shifts?.Wednesday) ?? -1,
+                        ParseShift(shifts?.Thursday) ?? -1,
+                        ParseShift(shifts?.Friday) ?? -1,
+                        ParseShift(shifts?.Saturday) ?? -1,
+                        ParseShift(shifts?.Sunday) ?? -1
+                    };
 
-                        // Tworzenie tablicy dla dni tygodnia z zamianą null i "none" na -1
-                        var shiftArray = new int[]
-                        {
-                            ParseShift(shifts.Monday) ?? -1,
-                            ParseShift(shifts.Tuesday) ?? -1,
-                            ParseShift(shifts.Wednesday) ?? -1,
-                            ParseShift(shifts.Thursday) ?? -1,
-                            ParseShift(shifts.Friday) ?? -1,
-                            ParseShift(shifts.Saturday) ?? -1,
-                            ParseShift(shifts.Sunday) ?? -1
-                        };
-
-                        employeePreferences.Add(shiftArray);
-
-                        // Logowanie preferencji pracownika
-                        Console.WriteLine($"Preferencje pracownika {worker.Key}: {string.Join(", ", shiftArray)}");
-                    }
-                    else
+                    // Dodajemy dane do tablicy wynikowej
+                    var fullWorkerData = new List<int>(shiftArray)
                     {
-                        // Jeśli brak preferencji dla pracownika, dodajemy tablicę wypełnioną -1
-                        employeePreferences.Add(new int[] { -1, -1, -1, -1, -1, -1, -1 });
-                    }
+                        maxWorkDays,   // Dodanie MaxWorkDays
+                        minDaysOff     // Dodanie MinDaysOff
+                    };
+
+                    employeePreferences.Add(fullWorkerData.ToArray());  // Dodajemy pełne dane pracownika
+
+                    // Logowanie preferencji pracownika
+                    Console.WriteLine($"Preferencje pracownika {worker.Key}: {string.Join(", ", fullWorkerData)}");
                 }
 
                 // Logowanie całej tablicy preferencji pracowników
@@ -213,6 +214,7 @@ public class AlgorithmController : Controller
 
             return null; // Brak danych w przypadku błędnej wartości
         }
+
 
 
 

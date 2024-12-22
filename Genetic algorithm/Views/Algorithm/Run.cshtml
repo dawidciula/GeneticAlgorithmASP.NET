@@ -348,8 +348,8 @@
                            Saturday: document.querySelector(`#Worker${i}SaturdayShift`).value || 'none',
                            Sunday: document.querySelector(`#Worker${i}SundayShift`).value || 'none'
                        },
-                       MaxWorkDays: document.querySelector(`#Worker${i}MaxWorkDays`).value || 0,
-                       MinDaysOff: document.querySelector(`#Worker${i}MinDaysOff`).value || 0,
+                       MaxWorkDays: document.querySelector(`#Worker${i}MaxWorkDays`).value || -1,
+                       MinDaysOff: document.querySelector(`#Worker${i}MinDaysOff`).value || -1,
                        PreferredColleagues: document.querySelector(`#Worker${i}PreferredColleagues`).value || 'none'
                    };
                    preferences[`Worker${i}`] = workerPreferences;
@@ -372,7 +372,7 @@
                    });
            
                    if (response.ok) {
-                       alert('Preferencje zostały zapisane!');
+                       //alert('Preferencje zostały zapisane!');
                    } else {
                        alert('Wystąpił błąd podczas zapisywania preferencji.');
                    }
