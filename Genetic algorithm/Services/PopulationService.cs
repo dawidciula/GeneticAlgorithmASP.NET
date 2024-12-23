@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace AG.Services
 {
-    public class Population
+    public class PopulationService
     {
         // Metoda generująca początkową populację
         public List<int[,]> GenerateInitialPopulation(int populationSize, int workers, int days)

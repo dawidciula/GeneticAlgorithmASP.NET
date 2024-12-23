@@ -26,11 +26,12 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.Requ
 
 //Services
 builder.Services.AddScoped<FitnessService>();
-builder.Services.AddScoped<Population>();
+builder.Services.AddScoped<PopulationService>();
 builder.Services.AddScoped<CrossoverService>();
 builder.Services.AddScoped<MutationService>();
 builder.Services.AddScoped<AlgorithmService>();
 builder.Services.AddScoped<IRepository, Repository>();
+builder.Services.AddScoped<PreferenceComparisonService>();
 builder.Services.AddRazorPages();
 
 var app = builder.Build();

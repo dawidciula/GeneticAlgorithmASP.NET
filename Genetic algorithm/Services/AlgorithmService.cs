@@ -7,23 +7,26 @@ namespace AG.Services
     public class AlgorithmService
     {
         private readonly FitnessService _fitnessService;
-        private readonly Population _population;
+        private readonly PopulationService _populationService;
         private readonly CrossoverService _crossoverService;
         private readonly MutationService _mutationService;
+        private readonly PreferenceComparisonService _preferenceComparisonService;
 
         private int[,] _bestSchedule;
         private double _bestFitness;
 
         public AlgorithmService(
             FitnessService fitnessService,
-            Population population,
+            PopulationService populationService,
             CrossoverService crossoverService,
-            MutationService mutationService)
+            MutationService mutationService,
+            PreferenceComparisonService preferenceComparisonService)
         {
             _fitnessService = fitnessService;
-            _population = population;
+            _populationService = populationService;
             _crossoverService = crossoverService;
             _mutationService = mutationService;
+            _preferenceComparisonService = preferenceComparisonService;
             _bestFitness = 0.0;
         }
 
@@ -43,7 +46,7 @@ namespace AG.Services
             var optimizationType = OptimizationType.RouletteSelection;
             double mutationFrequency = optimizationParameters.MutationFrequency;
             int numberOfParents = optimizationParameters.NumberOfParents;
-            int eliteCount = (int)(populationSize * optimizationParameters.ElitePercentage);
+            int eliteCount = (int)(populationSize * (optimizationParameters.ElitePercentage * 0.01));
             int numberOfCrossoverPoints = optimizationParameters.CrossoverPoints;
             int maxGenerations = optimizationParameters.MaxGenerations;
             int maxStagnation = optimizationParameters.MaxStagnation;
@@ -63,7 +66,7 @@ namespace AG.Services
             var random = new Random();
        
             List<int[,]> population;
-            population = _population.GenerateInitialPopulation(populationSize, numberOfWorkers, daysInWeek);
+            population = _populationService.GenerateInitialPopulation(populationSize, numberOfWorkers, daysInWeek);
             
             int generationsWithoutImprovement = 0;
 
@@ -150,12 +153,22 @@ namespace AG.Services
 
                 // Teraz zapewniamy, że liczba osobników w populacji nie przekroczy rozmiaru
                 // Populacja powinna składać się z elitarnych osobników i nowego pokolenia
-                offspring.AddRange(eliteIndividuals);
+                // Dodaj elitarnych osobników (nie przekraczając rozmiaru populacji)
+                offspring.AddRange(eliteIndividuals.Take(populationSize - offspring.Count));
+
 
                 // Upewnij się, że populacja nie przekroczy ustalonego rozmiaru
                 population = offspring.Take(populationSize).ToList();
             }
 
+            var unmetPreferences = _preferenceComparisonService.ComparePreferences(employeePreferences, _bestSchedule);
+
+            Console.WriteLine("Preferencje, które nie mogły zostać uwzględnione:");
+            foreach (var preference in unmetPreferences)
+            {
+                Console.WriteLine(preference);
+            }
+            
             return new ScheduleResult
             {
                 BestSchedule = _bestSchedule,

@@ -2,11 +2,11 @@
   "Worker1": {
     "Shifts": {
       "Monday": "off",
-      "Tuesday": "none",
-      "Wednesday": "none",
-      "Thursday": "none",
-      "Friday": "none",
-      "Saturday": "none",
+      "Tuesday": "off",
+      "Wednesday": "off",
+      "Thursday": "off",
+      "Friday": "off",
+      "Saturday": "off",
       "Sunday": "none"
     },
     "MaxWorkDays": -1,
@@ -15,7 +15,7 @@
   },
   "Worker2": {
     "Shifts": {
-      "Monday": "off",
+      "Monday": "none",
       "Tuesday": "none",
       "Wednesday": "none",
       "Thursday": "none",
@@ -30,11 +30,11 @@
   "Worker3": {
     "Shifts": {
       "Monday": "off",
-      "Tuesday": "none",
-      "Wednesday": "none",
-      "Thursday": "none",
-      "Friday": "none",
-      "Saturday": "none",
+      "Tuesday": "off",
+      "Wednesday": "off",
+      "Thursday": "off",
+      "Friday": "off",
+      "Saturday": "off",
       "Sunday": "none"
     },
     "MaxWorkDays": -1,
@@ -43,7 +43,7 @@
   },
   "Worker4": {
     "Shifts": {
-      "Monday": "off",
+      "Monday": "none",
       "Tuesday": "none",
       "Wednesday": "none",
       "Thursday": "none",
@@ -57,12 +57,12 @@
   },
   "Worker5": {
     "Shifts": {
-      "Monday": "none",
-      "Tuesday": "none",
-      "Wednesday": "none",
-      "Thursday": "none",
-      "Friday": "none",
-      "Saturday": "none",
+      "Monday": "off",
+      "Tuesday": "off",
+      "Wednesday": "off",
+      "Thursday": "off",
+      "Friday": "off",
+      "Saturday": "off",
       "Sunday": "none"
     },
     "MaxWorkDays": -1,
