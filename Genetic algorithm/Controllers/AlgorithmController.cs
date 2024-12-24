@@ -17,7 +17,7 @@ public class AlgorithmController : Controller
         private readonly AlgorithmService _algorithmService;
         private readonly PopulationService _populationService;
         private readonly PreferenceComparisonService _preferenceComparisonService;
-        private readonly IRepository _repository;  // Zakładam, że jest to potrzebne
+        private readonly IRepository _repository;
 
         public AlgorithmController(AlgorithmService algorithmService, IRepository repository, PopulationService populationService, PreferenceComparisonService preferenceComparisonService)
         {
@@ -30,8 +30,28 @@ public class AlgorithmController : Controller
         // Widok początkowy
         public async Task<IActionResult> Run()
         {
+            // Ścieżka do pliku JSON z preferencjami
+            string filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "preferences.json");
+
+            // Usuwanie pliku, jeśli istnieje
+            if (System.IO.File.Exists(filePath))
+            {
+                try
+                {
+                    System.IO.File.Delete(filePath);
+                    Console.WriteLine("Plik z preferencjami został usunięty przy załadowaniu widoku.");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Błąd podczas usuwania pliku z preferencjami: {ex.Message}");
+                    TempData["Error"] = "Nie udało się usunąć pliku z preferencjami.";
+                }
+            }
+
+            // Pobierz parametry optymalizacji z bazy
             var optimizationParameters = await _repository.GetOptimizationParameterByIdAsync(1);
 
+            // Utworzenie modelu
             var model = new CombinedAlgorithmParameters
             {
                 OptimizationParametersList = optimizationParameters != null
@@ -43,6 +63,7 @@ public class AlgorithmController : Controller
 
             return View(model);
         }
+
         
         [HttpPost]
         public IActionResult SaveEmployeePreferences([FromBody] Dictionary<string, EmployeePreferences> preferences)
@@ -305,7 +326,6 @@ public class AlgorithmController : Controller
         }
 
         [HttpPost]
-[HttpPost]
 public async Task<IActionResult> Run(CombinedAlgorithmParameters model)
 {
     if (!ModelState.IsValid)
@@ -316,77 +336,84 @@ public async Task<IActionResult> Run(CombinedAlgorithmParameters model)
 
     // Pobierz preferencje pracowników z istniejącej metody LoadEmployeePreferences
     var result = LoadEmployeePreferences();
+    List<int[]> employeePreferences;
+
     if (result is NotFoundObjectResult)
     {
-        TempData["Error"] = "Nie znaleziono pliku z preferencjami pracowników.";
+        Console.WriteLine("Nie znaleziono pliku z preferencjami pracowników. Generowanie domyślnych preferencji...");
+        var scheduleParameters = model.ScheduleParametersList.FirstOrDefault()
+                                 ?? new ScheduleParameters();
+
+        employeePreferences = Enumerable.Repeat(new int[] { -1, -1, -1, -1, -1, -1, -1, -1, -1 }, 
+            scheduleParameters.NumberOfWorkers).ToList();
+    }
+    else if (result is ObjectResult objectResult && objectResult.Value is List<int[]> loadedPreferences)
+    {
+        employeePreferences = loadedPreferences;
+    }
+    else
+    {
+        TempData["Error"] = "Wystąpił błąd podczas wczytywania preferencji.";
         return View("Run", model);
     }
 
-    if (result is ObjectResult objectResult && objectResult.Value is List<int[]> employeePreferences)
+    try
     {
-        try
+        // Logowanie preferencji
+        Console.WriteLine("Preferencje pracowników:");
+        foreach (var preference in employeePreferences)
         {
-            // Logowanie załadowanych preferencji
-            Console.WriteLine("Załadowano preferencje pracowników:");
-            foreach (var preference in employeePreferences)
-            {
-                Console.WriteLine(string.Join(", ", preference));
-            }
-
-            // Pobierz parametry optymalizacji
-            var optimizationParameters = await _repository.GetOptimizationParameterByIdAsync(1)
-                                                 ?? new OptimizationParameters
-                                                 {
-                                                     OptimizationType = OptimizationType.Roulette,
-                                                     PopulationSize = 100,
-                                                     PreferenceWeight = 0.5,
-                                                     MutationFrequency = 0.1,
-                                                     NumberOfParents = 2,
-                                                     ElitePercentage = 0.1,
-                                                     MaxGenerations = 100000,
-                                                     MaxStagnation = 1000,
-                                                     CrossoverPoints = 6
-                                                 };
-
-            var scheduleParameters = model.ScheduleParametersList.FirstOrDefault()
-                                     ?? new ScheduleParameters();
-
-            // Wygenerowanie początkowej populacji
-            var initialPopulation = _populationService.GenerateInitialPopulation(
-                optimizationParameters.PopulationSize,
-                scheduleParameters.NumberOfWorkers,
-                scheduleParameters.DaysInWeek);
-
-            // Uruchomienie algorytmu z załadowanymi preferencjami
-            var resultAlgorithm = await Task.Run(() =>
-                _algorithmService.RunAlgorithm(
-                    optimizationParameters,
-                    scheduleParameters,
-                    employeePreferences // Przesyłanie preferencji pracowników
-                ));
-
-            // Obliczanie niespełnionych preferencji
-            var unmetPreferences = _preferenceComparisonService.ComparePreferences(
-                employeePreferences, 
-                resultAlgorithm.BestSchedule);
-
-            // Dodanie niespełnionych preferencji do TempData
-            TempData["UnmetPreferences"] = unmetPreferences;
-
-            // Zwrócenie wyniku do widoku
-            return View("Result", resultAlgorithm);
+            Console.WriteLine(string.Join(", ", preference));
         }
-        catch (Exception ex)
-        {
-            TempData["Error"] = "Wystąpił błąd podczas przetwarzania algorytmu: " + ex.Message;
-            return View("Run", model);
-        }
+
+        // Pobierz parametry optymalizacji
+        var optimizationParameters = await _repository.GetOptimizationParameterByIdAsync(1)
+                                             ?? new OptimizationParameters
+                                             {
+                                                 OptimizationType = OptimizationType.Roulette,
+                                                 PopulationSize = 100,
+                                                 PreferenceWeight = 0.5,
+                                                 MutationFrequency = 0.1,
+                                                 NumberOfParents = 2,
+                                                 ElitePercentage = 0.1,
+                                                 MaxGenerations = 100000,
+                                                 MaxStagnation = 1000,
+                                                 CrossoverPoints = 6
+                                             };
+
+        var scheduleParameters = model.ScheduleParametersList.FirstOrDefault()
+                                 ?? new ScheduleParameters();
+
+        // Wygenerowanie początkowej populacji
+        var initialPopulation = _populationService.GenerateInitialPopulation(
+            optimizationParameters.PopulationSize,
+            scheduleParameters.NumberOfWorkers,
+            scheduleParameters.DaysInWeek);
+
+        // Uruchomienie algorytmu
+        var resultAlgorithm = await Task.Run(() =>
+            _algorithmService.RunAlgorithm(
+                optimizationParameters,
+                scheduleParameters,
+                employeePreferences
+            ));
+
+        // Obliczanie niespełnionych preferencji
+        var unmetPreferences = _preferenceComparisonService.ComparePreferences(
+            employeePreferences,
+            resultAlgorithm.BestSchedule);
+
+        // Dodanie niespełnionych preferencji do TempData
+        TempData["UnmetPreferences"] = unmetPreferences;
+
+        return View("Result", resultAlgorithm);
     }
-
-    TempData["Error"] = "Wystąpił błąd podczas wczytywania preferencji.";
-    return View("Run", model);
+    catch (Exception ex)
+    {
+        TempData["Error"] = "Wystąpił błąd podczas przetwarzania algorytmu: " + ex.Message;
+        return View("Run", model);
+    }
 }
-
 
 
     }
