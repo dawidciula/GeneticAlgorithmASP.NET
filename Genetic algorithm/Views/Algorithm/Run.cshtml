@@ -31,19 +31,19 @@
                     <!-- Zmiana poranna -->
                     <div class="col">
                         <label for="ScheduleParametersList[@i].MorningShiftWorkers">Rano:</label>
-                        <input type="number" name="ScheduleParametersList[@i].MorningShiftWorkers" class="form-control" value="@Model.ScheduleParametersList[i].MorningShiftWorkers" min="0" />
+                        <input type="number" name="ScheduleParametersList[@i].MorningShiftWorkers" class="form-control" value="@Model.ScheduleParametersList[i].MorningShiftWorkers" min="1" />
                     </div>
 
                     <!-- Zmiana popołudniowa -->
                     <div class="col">
                         <label for="ScheduleParametersList[@i].AfternoonShiftWorkers">Popołudnie:</label>
-                        <input type="number" name="ScheduleParametersList[@i].AfternoonShiftWorkers" class="form-control" value="@Model.ScheduleParametersList[i].AfternoonShiftWorkers" min="0" />
+                        <input type="number" name="ScheduleParametersList[@i].AfternoonShiftWorkers" class="form-control" value="@Model.ScheduleParametersList[i].AfternoonShiftWorkers" min="1" />
                     </div>
 
                     <!-- Zmiana nocna -->
                     <div class="col">
                         <label for="ScheduleParametersList[@i].NightShiftWorkers">Noc:</label>
-                        <input type="number" name="ScheduleParametersList[@i].NightShiftWorkers" class="form-control" value="@Model.ScheduleParametersList[i].NightShiftWorkers" min="0" />
+                        <input type="number" name="ScheduleParametersList[@i].NightShiftWorkers" class="form-control" value="@Model.ScheduleParametersList[i].NightShiftWorkers" min="1" />
                     </div>
                 </div>
             </div>

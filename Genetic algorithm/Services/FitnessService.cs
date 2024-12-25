@@ -7,7 +7,7 @@ namespace AG.Services
 {
     public class FitnessService
     {
-       public double CalculateFitness(int[,] schedule, List<int[]> employeePreferences, ScheduleParameters scheduleParameters)
+        public double CalculateFitness(int[,] schedule, List<int[]> employeePreferences, ScheduleParameters scheduleParameters)
 {
     double fitness = 0.0;
     int numberOfWorkers = schedule.GetLength(0);
@@ -17,6 +17,15 @@ namespace AG.Services
     int morningShiftWorkers = scheduleParameters.MorningShiftWorkers;
     int afternoonShiftWorkers = scheduleParameters.AfternoonShiftWorkers;
     int nightShiftWorkers = scheduleParameters.NightShiftWorkers;
+
+    // Wagi dla różnych aspektów
+    double shiftBalanceWeight = 1.0;
+    double preferenceWeight = 1.5;
+    double colleaguePreferenceWeight = 1.5;
+    double maxWorkDaysWeight = 2.0;
+    double minDaysOffWeight = 1.5;
+    double nightShiftPenaltyWeight = 2.0;
+    double defaultWorkDaysWeight = 2.0;  // Nowa waga dla dni pracy
 
     // Sekcja oceniająca liczbę pracowników przypisanych do każdej zmiany
     for (int day = 0; day < daysInWeek; day++)
@@ -44,9 +53,9 @@ namespace AG.Services
         }
 
         // Nagroda/punkty za równomierny rozdział pracowników
-        fitness += Math.Abs(morningShiftCount - morningShiftWorkers) == 0 ? 20 : -Math.Abs(morningShiftCount - morningShiftWorkers) * 2;
-        fitness += Math.Abs(afternoonShiftCount - afternoonShiftWorkers) == 0 ? 20 : -Math.Abs(afternoonShiftCount - afternoonShiftWorkers) * 2;
-        fitness += Math.Abs(nightShiftCount - nightShiftWorkers) == 0 ? 20 : -Math.Abs(nightShiftCount - nightShiftWorkers) * 2;
+        fitness += shiftBalanceWeight * (Math.Abs(morningShiftCount - morningShiftWorkers) == 0 ? 20 : -Math.Abs(morningShiftCount - morningShiftWorkers) * 2);
+        fitness += shiftBalanceWeight * (Math.Abs(afternoonShiftCount - afternoonShiftWorkers) == 0 ? 20 : -Math.Abs(afternoonShiftCount - afternoonShiftWorkers) * 2);
+        fitness += shiftBalanceWeight * (Math.Abs(nightShiftCount - nightShiftWorkers) == 0 ? 20 : -Math.Abs(nightShiftCount - nightShiftWorkers) * 2);
 
         // Sprawdzanie, czy reszta pracowników ma dzień wolny
         int totalAssignedWorkers = morningShiftCount + afternoonShiftCount + nightShiftCount;
@@ -56,7 +65,7 @@ namespace AG.Services
         }
     }
 
-    // Ocena zgodności harmonogramu z preferencjami pracowników (mniejsza waga)
+    // Ocena zgodności harmonogramu z preferencjami pracowników
     for (int worker = 0; worker < numberOfWorkers; worker++)
     {
         var preferences = employeePreferences[worker];
@@ -71,15 +80,15 @@ namespace AG.Services
 
             if (preferredShift == assignedShift)
             {
-                fitness += 1; // Zgodność preferencji
+                fitness += preferenceWeight; // Zgodność preferencji
             }
             else if (preferredShift == 0 && assignedShift != 0)
             {
-                fitness -= 2; // Kara za przypisanie zmiany, kiedy preferencja to dzień wolny
+                fitness -= preferenceWeight * 2; // Kara za przypisanie zmiany, kiedy preferencja to dzień wolny
             }
             else if (preferredShift != 0 && assignedShift == 0)
             {
-                fitness -= 2; // Kara za przypisanie dnia wolnego, kiedy preferencja to zmiana
+                fitness -= preferenceWeight * 2; // Kara za przypisanie dnia wolnego, kiedy preferencja to zmiana
             }
         }
     }
@@ -105,17 +114,16 @@ namespace AG.Services
                     // Pracownik i współpracownik muszą pracować razem
                     if (assignedShift == schedule[colleagueIndex - 1, day]) // Dostosowanie indeksu `colleagueIndex` do tablicy `schedule`
                     {
-                        fitness += 20; // Współpracownicy pracują razem, dodajemy punkty
+                        fitness += colleaguePreferenceWeight; // Współpracownicy pracują razem, dodajemy punkty
                     }
                     else
                     {
-                        fitness -= 1; // Współpracownicy nie pracują razem, odejmujemy punkty
+                        fitness -= colleaguePreferenceWeight / 2; // Współpracownicy nie pracują razem, odejmujemy punkty
                     }
                 }
             }
         }
     }
-
 
     // Reguła nocnych zmian (bez zmian)
     for (int worker = 0; worker < numberOfWorkers; worker++)
@@ -124,7 +132,7 @@ namespace AG.Services
         {
             if (schedule[worker, day - 1] == 3 && schedule[worker, day] != 3 && schedule[worker, day] != 0)
             {
-                fitness -= 10; // Naruszenie reguły nocnych zmian
+                fitness -= nightShiftPenaltyWeight; // Naruszenie reguły nocnych zmian
             }
         }
     }
@@ -158,7 +166,7 @@ namespace AG.Services
         // Nagroda za zbliżenie do MaxWorkDays
         if (workDaysCount == maxWorkDays)
         {
-            fitness += 10; // Punkty za dokładnie odpowiednią liczbę dni pracy
+            fitness += maxWorkDaysWeight; // Punkty za dokładnie odpowiednią liczbę dni pracy
         }
         else if (workDaysCount > maxWorkDays)
         {
@@ -168,11 +176,18 @@ namespace AG.Services
         // Nagroda za zbliżenie do MinDaysOff
         if (daysOffCount == minDaysOff)
         {
-            fitness += 10; // Punkty za dokładnie odpowiednią liczbę dni wolnych
+            fitness += minDaysOffWeight; // Punkty za dokładnie odpowiednią liczbę dni wolnych
         }
         else if (daysOffCount < minDaysOff)
         {
             fitness -= (minDaysOff - daysOffCount) * 5; // Kara za za mało dni wolnych
+        }
+
+        // Premiowanie harmonogramów, które przypisują 5 dni pracy, chyba że w preferencjach wybrano inaczej
+        int defaultWorkDays = 5;
+        if (workDaysCount == defaultWorkDays && preferences[7] == -1) // Jeśli preferencja nie jest ustawiona, traktujemy to jako domyślną wartość
+        {
+            fitness += defaultWorkDaysWeight; // Punkty za domyślne przydzielenie 5 dni pracy
         }
     }
 
