@@ -20,3 +20,76 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+/* Styl ogólny dla kontenera listy */
+#Worker${i}SelectedColleaguesList {
+  padding-left: 0;
+  margin-top: 10px;
+  list-style-type: none;
+}
+
+/* Styl dla każdego elementu listy */
+.selected-colleagues-list li {
+  background-color: #f8f9fa; /* Jasne tło */
+  border: 1px solid #ddd; /* Szara ramka */
+  border-radius: 10px; /* Zaokrąglone rogi */
+  margin-bottom: 10px; /* Odstęp między elementami */
+  padding: 10px 15px; /* Wewnętrzne marginesy */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Lekki cień */
+  transition: background-color 0.3s ease; /* Animacja tła przy najechaniu */
+}
+
+.selected-colleagues-list li:hover {
+  background-color: #f1f3f5; /* Jaśniejszy kolor tła przy najechaniu */
+}
+
+/* Styl przycisków usuwania */
+.remove-btn {
+  background-color: #f44336; /* Czerwony kolor tła */
+  border: none;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s ease; /* Animacja tła przy najechaniu */
+}
+
+.remove-btn:hover {
+  background-color: #d32f2f; /* Ciemniejszy czerwony przy najechaniu */
+}
+
+/* Ikony przycisków usuwania (opcjonalnie) */
+.remove-btn:before {
+  content: '🗑️'; /* Ikona kosza */
+  margin-right: 5px;
+}
+
+/* Dodanie ikonki usuwania do przycisku */
+.selected-colleagues-list li .remove-btn {
+  margin-left: 15px;
+  font-size: 16px; /* Dostosowanie rozmiaru tekstu w przycisku */
+}
+
+/* Styl na listę po kliknięciu (dla lepszego wyróżnienia) */
+.selected-colleagues-list li.selected {
+  background-color: #e3f2fd; /* Niebieskie tło po kliknięciu */
+  border-color: #64b5f6; /* Niebieska ramka */
+}
+
+/* Styl na kontener z listą wybranych pracowników */
+#Worker${i}SelectedColleagues {
+  padding: 20px;
+  background-color: #ffffff; /* Białe tło */
+  border-radius: 10px; /* Zaokrąglone rogi */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Cień wokół kontenera */
+}
+
+/* Dodatkowy margines dla tytułu "Wybrani współpracownicy" */
+#Worker${i}SelectedColleagues strong {
+  font-size: 1.2rem;
+  color: #007bff; /* Kolor tytułu */
+}

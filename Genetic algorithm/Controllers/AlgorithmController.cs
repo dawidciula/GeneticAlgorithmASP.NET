@@ -66,75 +66,76 @@ public class AlgorithmController : Controller
 
         
         [HttpPost]
-        public IActionResult SaveEmployeePreferences([FromBody] Dictionary<string, EmployeePreferences> preferences)
+public IActionResult SaveEmployeePreferences([FromBody] Dictionary<string, EmployeePreferences> preferences)
+{
+    // Logowanie otrzymanych danych w konsoli, żeby sprawdzić co przychodzi
+    Console.WriteLine("Otrzymane dane preferencji:");
+    try
+    {
+        var preferencesJson = JsonSerializer.Serialize(preferences, new JsonSerializerOptions { WriteIndented = true });
+        Console.WriteLine(preferencesJson);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Błąd podczas serializacji danych wejściowych: {ex.Message}");
+        return StatusCode(400, "Błąd przy serializacji danych wejściowych.");
+    }
+
+    // Sprawdzenie czy dane zostały poprawnie przesłane
+    if (preferences == null)
+    {
+        Console.WriteLine("Dane są null.");
+        return BadRequest("Nieprawidłowy format danych.");
+    }
+
+    // Iteracja po pracownikach w słowniku
+    foreach (var worker in preferences)
+    {
+        Console.WriteLine($"Pracownik: {worker.Key}");
+
+        // Logowanie preferencji dla każdego pracownika
+        try
         {
-            // Logowanie otrzymanych danych w konsoli, żeby sprawdzić co przychodzi
-            Console.WriteLine("Otrzymane dane preferencji:");
-            try
-            {
-                var preferencesJson = JsonSerializer.Serialize(preferences, new JsonSerializerOptions { WriteIndented = true });
-                Console.WriteLine(preferencesJson);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Błąd podczas serializacji danych wejściowych: {ex.Message}");
-                return StatusCode(400, "Błąd przy serializacji danych wejściowych.");
-            }
-
-            // Sprawdzenie czy dane zostały poprawnie przesłane
-            if (preferences == null)
-            {
-                Console.WriteLine("Dane są null.");
-                return BadRequest("Nieprawidłowy format danych.");
-            }
-
-            // Iteracja po pracownikach w słowniku
-            foreach (var worker in preferences)
-            {
-                Console.WriteLine($"Pracownik: {worker.Key}");
-
-                // Logowanie preferencji dla każdego pracownika
-                try
-                {
-                    var shifts = worker.Value.Shifts;
-                    Console.WriteLine($"Monday: {shifts.Monday}");
-                    Console.WriteLine($"Tuesday: {shifts.Tuesday}");
-                    Console.WriteLine($"Wednesday: {shifts.Wednesday}");
-                    Console.WriteLine($"Thursday: {shifts.Thursday}");
-                    Console.WriteLine($"Friday: {shifts.Friday}");
-                    Console.WriteLine($"Saturday: {shifts.Saturday}");
-                    Console.WriteLine($"Sunday: {shifts.Sunday}");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Błąd podczas przetwarzania Shifts dla pracownika {worker.Key}: {ex.Message}");
-                }
-
-                // Logowanie pozostałych preferencji
-                //Console.WriteLine($"MaxWorkDays: {worker.Value.MaxWorkDays}, MinDaysOff: {worker.Value.MinDaysOff}, PreferredColleagues: {worker.Value.PreferredColleagues}");
-            }
-
-            // Ścieżka do pliku, w którym zapisujemy dane
-            string filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "preferences.json");
-
-            // Serializowanie danych do JSON
-            var jsonString = JsonSerializer.Serialize(preferences, new JsonSerializerOptions { WriteIndented = true });
-
-            try
-            {
-                // Zapisywanie danych do pliku
-                System.IO.File.WriteAllText(filePath, jsonString);
-                //Console.WriteLine($"Preferencje zostały zapisane do pliku: {filePath}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Wystąpił błąd podczas zapisywania do pliku: {ex.Message}");
-                return StatusCode(500, "Błąd podczas zapisywania preferencji do pliku.");
-            }
-
-            // Zwracamy odpowiedź, że preferencje zostały zapisane
-            return Ok("Preferencje zostały odebrane i zapisane do pliku.");
+            var shifts = worker.Value.Shifts;
+            Console.WriteLine($"Monday: {shifts.Monday}");
+            Console.WriteLine($"Tuesday: {shifts.Tuesday}");
+            Console.WriteLine($"Wednesday: {shifts.Wednesday}");
+            Console.WriteLine($"Thursday: {shifts.Thursday}");
+            Console.WriteLine($"Friday: {shifts.Friday}");
+            Console.WriteLine($"Saturday: {shifts.Saturday}");
+            Console.WriteLine($"Sunday: {shifts.Sunday}");
         }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Błąd podczas przetwarzania Shifts dla pracownika {worker.Key}: {ex.Message}");
+        }
+
+        // Logowanie pozostałych preferencji
+        Console.WriteLine($"MaxWorkDays: {worker.Value.MaxWorkDays}, MinDaysOff: {worker.Value.MinDaysOff}, PreferredColleagues: {string.Join(", ", worker.Value.PreferredColleagues)}");
+    }
+
+    // Ścieżka do pliku, w którym zapisujemy dane
+    string filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "preferences.json");
+
+    // Serializowanie danych do JSON
+    var jsonString = JsonSerializer.Serialize(preferences, new JsonSerializerOptions { WriteIndented = true });
+
+    try
+    {
+        // Zapisywanie danych do pliku
+        System.IO.File.WriteAllText(filePath, jsonString);
+        Console.WriteLine($"Preferencje zostały zapisane do pliku: {filePath}");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Wystąpił błąd podczas zapisywania do pliku: {ex.Message}");
+        return StatusCode(500, "Błąd podczas zapisywania preferencji do pliku.");
+    }
+
+    // Zwracamy odpowiedź, że preferencje zostały zapisane
+    return Ok("Preferencje zostały odebrane i zapisane do pliku.");
+}
+
         
         [HttpGet]
         public IActionResult LoadEmployeePreferences()

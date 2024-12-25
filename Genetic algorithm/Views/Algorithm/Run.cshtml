@@ -315,11 +315,19 @@
                                <input type="number" id="Worker${i}MinDaysOff" name="WorkerPreferences[${i - 1}].MinDaysOff" class="form-control" min="0" max="6" placeholder="Brak preferencji" />
                            </div>
        
-                           <!-- Preferencje współpracy z innymi pracownikami -->
-                           <div class="mb-2">
-                               <label for="Worker${i}PreferredColleagues" class="form-label">Preferowani współpracownicy:</label>
-                               <input type="text" id="Worker${i}PreferredColleagues" name="WorkerPreferences[${i - 1}].PreferredColleagues" class="form-control" placeholder="np. Jan Kowalski, Anna Nowak">
-                           </div>
+                         <div class="mb-2">
+                             <label for="Worker${i}PreferredColleagues" class="form-label">Preferowani współpracownicy:</label>
+                             <select id="Worker${i}PreferredColleagues" name="WorkerPreferences[${i - 1}].PreferredColleagues" class="form-select" multiple>
+                                 <!-- Opcje będą generowane dynamicznie -->
+                                 ${generateWorkerOptions(numberOfWorkers, i)}
+                             </select>
+                             <!-- Kontener na listę wybranych pracowników -->
+                             <div id="Worker${i}SelectedColleagues" class="mt-2">
+                                 <text>Wybrani współpracownicy:</text>
+                                 <ul id="Worker${i}SelectedColleaguesList"></ul>
+                             </div>
+                         </div>
+
                        </fieldset>
                    `;
                    preferencesContainer.insertAdjacentHTML('beforeend', workerPreferences);
@@ -328,7 +336,64 @@
                preferencesModal.show();
            });
        
-           // Obsługa zapisania preferencji
+           
+          // Funkcja do generowania opcji dla selecta preferowanych współpracowników
+              function generateWorkerOptions(numberOfWorkers, currentWorkerIndex) {
+                  let options = "";
+                  for (let j = 1; j <= numberOfWorkers; j++) {
+                      if (j !== currentWorkerIndex) {
+                          options += `<option value="${j}">Pracownik ${j}</option>`;
+                      }
+                  }
+                  return options;
+              }
+          
+             // Obsługa zmiany preferowanych współpracowników
+             document.addEventListener('change', (event) => {
+                 if (event.target && event.target.matches('[id^="Worker"][id$="PreferredColleagues"]')) {
+                     const selectedOptions = Array.from(event.target.selectedOptions).map(option => parseInt(option.value));
+                     console.log(`Wybrani pracownicy dla ${event.target.id}:`, selectedOptions);
+             
+                     // Pobieramy numer pracownika z ID
+                     const workerId = event.target.id.match(/\d+/)[0];
+             
+                     // Aktualizacja listy wybranych pracowników
+                     const listId = `${event.target.id.replace("PreferredColleagues", "SelectedColleaguesList")}`;
+                     const listElement = document.getElementById(listId);
+             
+                     if (!listElement) {
+                         console.error(`Nie znaleziono listy o ID: ${listId}`);
+                         return;
+                     }
+             
+                     // Dodajemy nowe elementy do listy
+                     selectedOptions.forEach(workerId => {
+                         if (![...listElement.children].some(li => li.textContent.includes(`Pracownik ${workerId}`))) {
+                             const li = document.createElement('li');
+                             li.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-center');
+                             li.textContent = `Pracownik ${workerId}`;
+             
+                             // Tworzymy przycisk do usuwania
+                             const removeBtn = document.createElement('button');
+                             removeBtn.textContent = 'Usuń';
+                             removeBtn.classList.add('remove-btn');
+                             removeBtn.onclick = () => li.remove(); // Usuwamy element li
+             
+                             // Dodajemy przycisk do elementu li
+                             li.appendChild(removeBtn);
+                             
+                             // Dodajemy pracownika do listy
+                             listElement.appendChild(li);
+                         }
+                     });
+                 }
+             });
+
+
+           
+           
+           
+           
            document.getElementById('PreferencesForm').addEventListener('submit', async (e) => {
                e.preventDefault(); // Zatrzymanie domyślnego zachowania formularza
                preferencesModal.hide(); // Zamknięcie modala
@@ -338,6 +403,16 @@
                const numberOfWorkers = parseInt(numberOfWorkersInput.value);
            
                for (let i = 1; i <= numberOfWorkers; i++) {
+                   // Pobieranie wybranych preferowanych współpracowników z listy <ul>
+                   const selectedColleaguesList = document.querySelector(`#Worker${i}SelectedColleaguesList`);
+                   const selectedColleagues = Array.from(selectedColleaguesList.getElementsByTagName('li')).map(li => {
+                       // Zakładając, że tekst w li to "Pracownik X" i chcemy wyciągnąć numer
+                       return parseInt(li.textContent.replace('Pracownik ', '').trim());
+                   });
+           
+                   // Logowanie liczby wybranych preferowanych współpracowników
+                   console.log(`Pracownik ${i} wybrał ${selectedColleagues.length} preferowanych współpracowników:`, selectedColleagues);
+           
                    const workerPreferences = {
                        Shifts: {
                            Monday: document.querySelector(`#Worker${i}MondayShift`).value || 'none',
@@ -350,8 +425,9 @@
                        },
                        MaxWorkDays: document.querySelector(`#Worker${i}MaxWorkDays`).value || -1,
                        MinDaysOff: document.querySelector(`#Worker${i}MinDaysOff`).value || -1,
-                       PreferredColleagues: document.querySelector(`#Worker${i}PreferredColleagues`).value || 'none'
+                       PreferredColleagues: selectedColleagues // Wszystkie wybrane preferencje współpracowników
                    };
+           
                    preferences[`Worker${i}`] = workerPreferences;
                }
            
@@ -359,7 +435,7 @@
                const preferencesJson = JSON.stringify(preferences);
            
                // Wyświetlanie danych w konsoli (możesz je wysłać do serwera)
-               console.log(preferencesJson);
+               console.log('Wysyłamy preferencje:', preferencesJson);
            
                try {
                    // Wysyłanie danych do serwera
@@ -383,6 +459,8 @@
            
                preferencesModal.hide(); // Zamknięcie modala
            });
+
+
 
 
 </script>

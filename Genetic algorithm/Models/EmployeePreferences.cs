@@ -21,6 +21,6 @@ namespace AG.Models
 
         public int MaxWorkDays { get; set; } = 7;
         public int MinDaysOff { get; set; } = 0;
-        public string PreferredColleagues { get; set; } = string.Empty; // Preferencje współpracy z innymi pracownikami
+        public List<int> PreferredColleagues { get; set; } = new List<int>();
     }
 }
