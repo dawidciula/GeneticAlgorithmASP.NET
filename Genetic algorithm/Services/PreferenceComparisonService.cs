@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace AG.Services
 {
@@ -27,10 +28,10 @@ namespace AG.Services
                 // Sprawdzamy, czy liczba dni w preferencjach pracownika jest zgodna z liczbą dni w harmonogramie
                 int[] preferences = employeePreferences[employee];
 
-                // Sprawdzamy, czy tablica preferencji zawiera 9 elementów (7 dni tygodnia, maxWorkDays, minFreeDays)
-                if (preferences.Length != 9)
+                // Sprawdzamy, czy tablica preferencji zawiera co najmniej 9 elementów
+                if (preferences.Length < 9)
                 {
-                    unmetPreferences.Add($"Błąd: Preferencje dla pracownika {employee + 1} mają nieprawidłową liczbę dni. (Preferencje: {preferences.Length}, Oczekiwano: 9)");
+                    unmetPreferences.Add($"Błąd: Preferencje dla pracownika {employee + 1} mają nieprawidłową liczbę dni. (Preferencje: {preferences.Length}, Oczekiwano co najmniej 9)");
                     continue; // Przechodzimy do następnego pracownika
                 }
 
@@ -41,6 +42,9 @@ namespace AG.Services
                 // maxWorkDays (8. element) i minFreeDays (9. element)
                 int maxWorkDays = preferences[7];
                 int minFreeDays = preferences[8];
+
+                // Sprawdzamy preferencje współpracowników, które mogą być po 9. indeksie
+                var preferredColleagues = preferences.Skip(9).ToList(); // Zbieramy współpracowników z listy preferencji
 
                 int workDaysCount = 0;
                 int daysOffCount = 0;
@@ -68,7 +72,7 @@ namespace AG.Services
                             $"Pracownik {employee + 1}, Dzień {day + 1}: Zmiana {preference} nie mogła zostać przypisana, przydzielona zmiana: {assignedShift}");
                     }
                 }
-                
+
                 // Sprawdzamy dni pracy i dni wolne względem maxWorkDays i minFreeDays
                 if (maxWorkDays != -1 && workDaysCount > maxWorkDays)
                 {
@@ -78,6 +82,34 @@ namespace AG.Services
                 if (minFreeDays != -1 && daysOffCount < minFreeDays)
                 {
                     unmetPreferences.Add($"Pracownik {employee + 1} ma za mało dni wolnych. Minimalna liczba dni wolnych to {minFreeDays}. Liczba dni wolnych: {daysOffCount}");
+                }
+
+                // Sprawdzamy preferencje współpracowników
+                if (preferredColleagues.Count > 0)
+                {
+                    // Sprawdzamy, czy preferowani współpracownicy pracują razem
+                    for (int day = 0; day < 7; day++) // 0-6 to dni tygodnia
+                    {
+                        int assignedShift = generatedSchedule[employee, day];
+
+                        foreach (var colleagueIndex in preferredColleagues)
+                        {
+                            if (colleagueIndex != -1)
+                            {
+                                // Indeks współpracownika zaczyna się od 1, więc musimy to uwzględnić
+                                int colleagueShift = generatedSchedule[colleagueIndex - 1, day];
+
+                                if (assignedShift == colleagueShift)
+                                {
+                                    // Pracownicy pracują razem, nic nie robimy
+                                }
+                                else
+                                {
+                                    unmetPreferences.Add($"Pracownik {employee + 1}, Dzień {day + 1}: Preferowany współpracownik {colleagueIndex} nie pracuje razem z pracownikiem {employee + 1}.");
+                                }
+                            }
+                        }
+                    }
                 }
             }
 

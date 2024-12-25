@@ -137,108 +137,119 @@ public IActionResult SaveEmployeePreferences([FromBody] Dictionary<string, Emplo
 }
 
         
-        [HttpGet]
-        public IActionResult LoadEmployeePreferences()
+       [HttpGet]
+public IActionResult LoadEmployeePreferences()
+{
+    // Ścieżka do pliku JSON z preferencjami
+    string filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "preferences.json");
+
+    // Sprawdzenie, czy plik istnieje
+    if (!System.IO.File.Exists(filePath))
+    {
+        return NotFound("Plik z preferencjami nie istnieje.");
+    }
+
+    try
+    {
+        // Odczytanie danych JSON z pliku
+        var jsonString = System.IO.File.ReadAllText(filePath);
+
+        // Deserializacja danych do obiektu Dictionary<string, EmployeePreferences>
+        var preferences = JsonSerializer.Deserialize<Dictionary<string, EmployeePreferences>>(jsonString);
+
+        if (preferences == null)
         {
-            // Ścieżka do pliku JSON z preferencjami
-            string filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "preferences.json");
-
-            // Sprawdzenie, czy plik istnieje
-            if (!System.IO.File.Exists(filePath))
-            {
-                return NotFound("Plik z preferencjami nie istnieje.");
-            }
-
-            try
-            {
-                // Odczytanie danych JSON z pliku
-                var jsonString = System.IO.File.ReadAllText(filePath);
-
-                // Deserializacja danych do obiektu Dictionary<string, EmployeePreferences>
-                var preferences = JsonSerializer.Deserialize<Dictionary<string, EmployeePreferences>>(jsonString);
-
-                if (preferences == null)
-                {
-                    return BadRequest("Nie udało się odczytać preferencji z pliku.");
-                }
-
-                // Przekształcenie Dictionary na Listę par klucz-wartość
-                var preferencesList = preferences.ToList();
-
-                // Lista wynikowa
-                var employeePreferences = new List<int[]>();  // Lista tablic int[]
-
-                // Iteracja po pracownikach
-                foreach (var worker in preferencesList)
-                {
-                    // Pobieramy dane pracownika
-                    var shifts = worker.Value?.Shifts;
-                    var maxWorkDays = worker.Value?.MaxWorkDays ?? 0;  // Wartość MaxWorkDays
-                    var minDaysOff = worker.Value?.MinDaysOff ?? 0;   // Wartość MinDaysOff
-
-                    // Tworzymy tablicę dla dni tygodnia z zamianą null i "none" na -1
-                    var shiftArray = new int[]
-                    {
-                        ParseShift(shifts?.Monday) ?? -1,
-                        ParseShift(shifts?.Tuesday) ?? -1,
-                        ParseShift(shifts?.Wednesday) ?? -1,
-                        ParseShift(shifts?.Thursday) ?? -1,
-                        ParseShift(shifts?.Friday) ?? -1,
-                        ParseShift(shifts?.Saturday) ?? -1,
-                        ParseShift(shifts?.Sunday) ?? -1
-                    };
-
-                    // Dodajemy dane do tablicy wynikowej
-                    var fullWorkerData = new List<int>(shiftArray)
-                    {
-                        maxWorkDays,   // Dodanie MaxWorkDays
-                        minDaysOff     // Dodanie MinDaysOff
-                    };
-
-                    employeePreferences.Add(fullWorkerData.ToArray());  // Dodajemy pełne dane pracownika
-
-                    // Logowanie preferencji pracownika
-                    Console.WriteLine($"Preferencje pracownika {worker.Key}: {string.Join(", ", fullWorkerData)}");
-                }
-
-                // Logowanie całej tablicy preferencji pracowników
-                Console.WriteLine("Tablica preferencji wszystkich pracowników:");
-                foreach (var preference in employeePreferences)
-                {
-                    Console.WriteLine(string.Join(", ", preference));
-                }
-
-                // Zwrócenie listy jako odpowiedź
-                return Ok(employeePreferences);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Błąd podczas odczytu preferencji: {ex.Message}");
-                return StatusCode(500, "Wystąpił błąd podczas przetwarzania danych.");
-            }
+            return BadRequest("Nie udało się odczytać preferencji z pliku.");
         }
 
-        // Pomocnicza metoda do parsowania zmiany
-        private int? ParseShift(string shift)
+        // Przekształcenie Dictionary na Listę par klucz-wartość
+        var preferencesList = preferences.ToList();
+
+        // Lista wynikowa
+        var employeePreferences = new List<int[]>();  // Lista tablic int[]
+
+        // Iteracja po pracownikach
+        foreach (var worker in preferencesList)
         {
-            if (string.IsNullOrEmpty(shift) || shift.Equals("none", StringComparison.OrdinalIgnoreCase))
+            // Pobieramy dane pracownika
+            var shifts = worker.Value?.Shifts;
+            var maxWorkDays = worker.Value?.MaxWorkDays ?? 0;  // Wartość MaxWorkDays
+            var minDaysOff = worker.Value?.MinDaysOff ?? 0;   // Wartość MinDaysOff
+            var preferredColleagues = worker.Value?.PreferredColleagues ?? new List<int>(); // Preferencje współpracowników
+
+            // Tworzymy tablicę dla dni tygodnia z zamianą null i "none" na -1
+            var shiftArray = new int[]
             {
-                return null; // Brak preferencji (none)
+                ParseShift(shifts?.Monday),
+                ParseShift(shifts?.Tuesday),
+                ParseShift(shifts?.Wednesday),
+                ParseShift(shifts?.Thursday),
+                ParseShift(shifts?.Friday),
+                ParseShift(shifts?.Saturday),
+                ParseShift(shifts?.Sunday)
+            };
+
+            // Tworzymy pełne dane pracownika: dni, maxWorkDays, minDaysOff i preferowani współpracownicy
+            var fullWorkerData = new List<int>(shiftArray)
+            {
+                maxWorkDays,   // Dodanie MaxWorkDays
+                minDaysOff     // Dodanie MinDaysOff
+            };
+
+            // Dodajemy preferowanych współpracowników (jeśli są)
+            if (preferredColleagues.Any())
+            {
+                fullWorkerData.AddRange(preferredColleagues);
+            }
+            else
+            {
+                fullWorkerData.Add(-1);  // Jeśli brak preferencji, dodajemy -1
             }
 
-            if (shift.Equals("off", StringComparison.OrdinalIgnoreCase))
-            {
-                return 0; // Wolne
-            }
+            // Konwertujemy List<int> na tablicę int[] i dodajemy do wynikowej listy
+            employeePreferences.Add(fullWorkerData.ToArray());
 
-            if (int.TryParse(shift, out int shiftValue))
-            {
-                return shiftValue; // Wartość zmiany
-            }
-
-            return null; // Brak danych w przypadku błędnej wartości
+            // Logowanie preferencji pracownika
+            Console.WriteLine($"Preferencje pracownika {worker.Key}: {string.Join(", ", fullWorkerData)}");
         }
 
+        // Logowanie całej tablicy preferencji pracowników
+        Console.WriteLine("Tablica preferencji wszystkich pracowników:");
+        foreach (var preference in employeePreferences)
+        {
+            Console.WriteLine(string.Join(", ", preference));
+        }
+
+        // Zwrócenie listy jako odpowiedź
+        return Ok(employeePreferences);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Błąd podczas odczytu preferencji: {ex.Message}");
+        return StatusCode(500, "Wystąpił błąd podczas przetwarzania danych.");
+    }
+}
+
+// Pomocnicza metoda do parsowania zmiany
+private int ParseShift(string shift)
+{
+    if (string.IsNullOrEmpty(shift) || shift.Equals("none", StringComparison.OrdinalIgnoreCase))
+    {
+        return -1; // Brak preferencji, zamiana na -1
+    }
+
+    if (shift.Equals("off", StringComparison.OrdinalIgnoreCase))
+    {
+        return 0; // Wolne
+    }
+
+    if (int.TryParse(shift, out int shiftValue))
+    {
+        return shiftValue; // Wartość zmiany
+    }
+
+    return -1; // Brak danych w przypadku błędnej wartości
+}
 
 
 
