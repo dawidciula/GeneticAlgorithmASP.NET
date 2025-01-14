@@ -57,10 +57,6 @@
                 <label for="ScheduleParametersList[@i].DaysInWeek">Liczba dni:</label>
                 <input type="number" name="ScheduleParametersList[@i].DaysInWeek" class="form-control" value="7" readonly />
             </div>
-            <div>
-                <label for="ScheduleParametersList[@i].NumberofWeeks">Ilość tygodni:</label>
-                <input type="number" name="ScheduleParametersList[@i].NumberOfWeeks" class="form-control" value="@Model.ScheduleParametersList[i].NumberOfWeeks" />
-            </div>
             
         }
     </fieldset>
@@ -95,12 +91,6 @@
                                 <label for="OptimizationParametersList[@i].PopulationSize">Rozmiar populacji:</label>
                                 <input type="number" name="OptimizationParametersList[@i].PopulationSize" class="form-control" value="@Model.OptimizationParametersList[i].PopulationSize" min="10" max="1000" />
                             </div>
-
-                            <div>
-                                <label for="OptimizationParametersList[@i].PreferenceWeight">Waga preferencji:</label>
-                                <input type="number" name="OptimizationParametersList[@i].PreferenceWeight" class="form-control" value="@Model.OptimizationParametersList[i].PreferenceWeight" min="0" max="1" step="0.01" />
-                            </div>
-
                             <div>
                                 <label for="OptimizationParametersList[@i].MutationFrequency">Częstotliwość mutacji:</label>
                                 <input type="input" name="OptimizationParametersList[@i].MutationFrequency" class="form-control" value="@Model.OptimizationParametersList[i].MutationFrequency" min="0" max="1" step="0.01" />

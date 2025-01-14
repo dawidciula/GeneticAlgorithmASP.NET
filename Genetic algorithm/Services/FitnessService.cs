@@ -25,7 +25,7 @@ namespace AG.Services
     double maxWorkDaysWeight = 2.0;
     double minDaysOffWeight = 1.5;
     double nightShiftPenaltyWeight = 2.0;
-    double defaultWorkDaysWeight = 2.0;  // Nowa waga dla dni pracy
+    double defaultWorkDaysWeight = 2.0;
 
     // Sekcja oceniająca liczbę pracowników przypisanych do każdej zmiany
     for (int day = 0; day < daysInWeek; day++)

@@ -71,7 +71,13 @@ namespace AG.Services
             {
                 // Obliczanie fitness
                 var fitness = population.Select(schedule => _fitnessService.CalculateFitness(schedule, employeePreferences, scheduleParameters)).ToArray();
-
+                
+                File.AppendAllText("fitness5.txt", "\r\n" + generation + " ");
+                for (int i = 0; i < fitness.Length; i++)
+                {
+                    File.AppendAllText("fitness5.txt", fitness[i] + " ");
+                    
+                }
 
                 // Sprawdzenie poprawności tablicy fitness przed jej użyciem
                 if (fitness == null || fitness.Length == 0)
@@ -100,7 +106,6 @@ namespace AG.Services
                 Console.WriteLine($"  Liczba wygenerowanych harmonogramów: {population.Count}");
                 Console.WriteLine($"  Liczba osobników w populacji: {population.Count}");
                 Console.WriteLine($"  Liczba rodziców: {numberOfParents}");
-                Console.WriteLine($"  Liczba elitarnych osobników: {eliteCount}");
 
                 // Sprawdzenie warunku stagnacji
                 if (generationsWithoutImprovement >= maxStagnation)
@@ -141,17 +146,17 @@ namespace AG.Services
                         optimizationType, // Przekazanie odpowiedniego typu
                         random,
                         numberOfParents,
-                        mutationFrequency);
+                        mutationFrequency,
+                        generation);
 
                 // Wykonanie krzyżowania
                 var offspring = _crossoverService.PerformCrossover(parents, random, numberOfWorkers, daysInWeek, numberOfCrossoverPoints);
 
                 // Wykonanie mutacji
                 _mutationService.PerformMutation(offspring, random, numberOfWorkers, daysInWeek, mutationFrequency);
-
-                // Teraz zapewniamy, że liczba osobników w populacji nie przekroczy rozmiaru
+                
                 // Populacja powinna składać się z elitarnych osobników i nowego pokolenia
-                offspring.AddRange(eliteIndividuals);
+                offspring.AddRange(eliteIndividuals.Take(populationSize - offspring.Count));
 
                 // Upewnij się, że populacja nie przekroczy ustalonego rozmiaru
                 population = offspring.Take(populationSize).ToList();
@@ -164,7 +169,7 @@ namespace AG.Services
             };
         }
 
-        private List<int[,]> SelectParents(List<int[,]> population, double[] fitness, OptimizationType optimizationType, Random random, int numberOfParents, double mutationFrequency)
+        private List<int[,]> SelectParents(List<int[,]> population, double[] fitness, OptimizationType optimizationType, Random random, int numberOfParents, double mutationFrequency, int generation)
         {
             var parents = new List<int[,]>();
 
@@ -183,6 +188,13 @@ namespace AG.Services
                         fitness[i] = 0; // Przycina niskie wartości fitness
                 }
 
+                for (int i = 0; i < fitness.Length; i++)
+                {
+                    double x = fitness[i] / fitness.Max();
+                    x = x * x;
+                    fitness[i] *= x;
+                }
+
                 var slots = FillSlots(fitness);
                 for (int i = 0; i < numberOfParents; i++)
                 {
@@ -192,8 +204,14 @@ namespace AG.Services
             }
             else if (optimizationType == OptimizationType.TournamentSelection)
             {
-                int tournamentSize = Math.Max(2, numberOfParents); // Domyślny rozmiar turnieju
+                int tournamentSize = 6; // Domyślny rozmiar turnieju
+                
 
+                if (generation > 100)
+                {
+                    tournamentSize = 20;
+                }
+                
                 for (int i = 0; i < numberOfParents; i++)
                 {
                     int bestIndex = -1;
