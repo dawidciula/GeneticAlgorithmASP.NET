@@ -1,9 +1,30 @@
+using System.Globalization;
+using AG.Models;
 using AG.Services;
+using Genetic_algorithm.Interfaces;
+using Genetic_algorithm.Repository;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualBasic;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+//Konfiguracja bazy danych
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseMySql(
+        builder.Configuration.GetConnectionString("DefaultConnection"), 
+        new MySqlServerVersion(new Version(8, 3, 0)) // Wersja MySQL 8.0.0, dostosuj do swojej wersji
+    )
+);
+
+
+
+builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+    .AddEntityFrameworkStores<ApplicationDbContext>();
+
 
 //Services
 builder.Services.AddScoped<FitnessService>();
@@ -11,6 +32,9 @@ builder.Services.AddScoped<PopulationService>();
 builder.Services.AddScoped<CrossoverService>();
 builder.Services.AddScoped<MutationService>();
 builder.Services.AddScoped<AlgorithmService>();
+builder.Services.AddScoped<IRepository, Repository>();
+builder.Services.AddScoped<PreferenceComparisonService>();
+builder.Services.AddRazorPages();
 
 var app = builder.Build();
 
@@ -22,11 +46,14 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+app.MapRazorPages();
+
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(

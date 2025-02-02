@@ -1,4 +1,8 @@
 @model AG.Models.ScheduleResult
+@{
+    var unmetPreferences = TempData["UnmetPreferences"] as List<string> ?? new List<string>();
+    var daysOfWeek = new[] { "Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota", "Niedziela" };
+}
 
 <!DOCTYPE html>
 <html lang="pl">
@@ -10,6 +14,7 @@
         table {
             border-collapse: collapse;
             width: 100%;
+            margin-bottom: 20px;
         }
         td, th {
             border: 1px solid #ddd;
@@ -23,6 +28,43 @@
         .shift-1 { background-color: #add8e6; } /* Poranna zmiana */
         .shift-2 { background-color: #f0e68c; } /* Popołudniowa zmiana */
         .shift-3 { background-color: #ffa07a; } /* Nocna zmiana */
+
+        .unmet-preferences {
+            margin-top: 30px;
+            background-color: #f8d7da;
+            padding: 20px;
+            border: 1px solid #f5c6cb;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .unmet-preferences h3 {
+            color: #721c24;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        .unmet-preferences ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .unmet-preferences ul li {
+            color: #721c24;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+        .unmet-preferences ul li span {
+            font-weight: normal;
+            color: #555;
+        }
+
+        .alert {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -32,20 +74,17 @@
     <thead>
     <tr>
         <th>Pracownik</th>
-        <th>Pon</th>
-        <th>Wt</th>
-        <th>Śr</th>
-        <th>Czw</th>
-        <th>Pt</th>
-        <th>Sob</th>
-        <th>Nd</th>
+        @foreach (var day in daysOfWeek)
+        {
+            <th>@day</th>
+        }
     </tr>
     </thead>
     <tbody>
     @for (int i = 0; i < Model.BestSchedule.GetLength(0); i++)
     {
         <tr>
-            <td>Pracownik @i</td>
+            <td>Pracownik @(i + 1)</td>
             @for (int j = 0; j < Model.BestSchedule.GetLength(1); j++)
             {
                 <td class="shift-@Model.BestSchedule[i, j]">
@@ -63,5 +102,26 @@
     }
     </tbody>
 </table>
+
+@if (unmetPreferences.Any())
+{
+    <div class="unmet-preferences">
+        <h3>Niespełnione Preferencje:</h3>
+        <ul>
+            @foreach (var preference in unmetPreferences)
+            {
+                <li>
+                    @preference
+                </li>
+            }
+        </ul>
+    </div>
+}
+else
+{
+    <div class="alert">
+        Wszystkie preferencje zostały spełnione!
+    </div>
+}
 </body>
 </html>

@@ -1,14 +1,13 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using AG.Models;
+using Genetic_algorithm.Interfaces;
+using Genetic_algorithm.Models;
 
 namespace AG.Services
 {
     public class AlgorithmService
     {
         private readonly FitnessService _fitnessService;
-        private readonly PopulationService _populationService;
+        private readonly PopulationService _population;
         private readonly CrossoverService _crossoverService;
         private readonly MutationService _mutationService;
 
@@ -17,128 +16,145 @@ namespace AG.Services
 
         public AlgorithmService(
             FitnessService fitnessService,
-            PopulationService populationService,
+            PopulationService population,
             CrossoverService crossoverService,
             MutationService mutationService)
         {
             _fitnessService = fitnessService;
-            _populationService = populationService;
+            _population = population;
             _crossoverService = crossoverService;
             _mutationService = mutationService;
             _bestFitness = 0.0;
         }
 
-        public ScheduleResult RunAlgorithm(OptimizationParameters parameters, EmployeePreference employeePreference)
+        public ScheduleResult RunAlgorithm(OptimizationParameters optimizationParameters, ScheduleParameters scheduleParameters, List<int[]> employeePreferences)
         {
-            int populationSize = parameters.PopulationSize;
-            int numberOfWorkers = parameters.NumberOfWorkers;
-            int daysInWeek = parameters.DaysInWeek;
-            double preferenceWeight = parameters.PreferenceWeight;
-            var optimizationType = (OptimizationType)parameters.OptimizationType;
-            double mutationFrequency = parameters.MutationFrequency;
-            int numberOfParents = parameters.NumberOfParents;
-            int eliteCount = (int)(parameters.PopulationSize * parameters.ElitePercentage);
+            // Logowanie preferencji pracowników
+            //Console.WriteLine("Lista preferencji pracowników:");
+            //for (int i = 0; i < employeePreferences.Count; i++)
+            //{
+            //    Console.WriteLine($"Pracownik {i + 1}: {string.Join(", ", employeePreferences[i])}");
+            ///}
+            // Parametry
+            int populationSize = optimizationParameters.PopulationSize;
+            int numberOfWorkers = scheduleParameters.NumberOfWorkers;
+            int daysInWeek = 7;
+            double preferenceWeight = 0;
+            var optimizationType = OptimizationType.RouletteSelection;
+            double mutationFrequency = optimizationParameters.MutationFrequency;
+            int numberOfParents = optimizationParameters.NumberOfParents;
+            int eliteCount = (int)(populationSize * optimizationParameters.ElitePercentage);
+            int numberOfCrossoverPoints = optimizationParameters.CrossoverPoints;
+            int maxGenerations = optimizationParameters.MaxGenerations;
+            int maxStagnation = optimizationParameters.MaxStagnation;
 
-            
-            var employeePreferences = new List<int[]>
-            {
-                new int[] {1, 1, 1, 1, 1, 0, 0}, // Pracownik 1
-                new int[] {0, 1, 1, 1, 0, 2, 0}, // Pracownik 2
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-            };
+            //Console.WriteLine("Uruchomiono algorytm z następującymi parametrami:");
+            //Console.WriteLine($"OptimizationType: {optimizationType}");
+            //Console.WriteLine($"PopulationSize: {populationSize}");
+            //Console.WriteLine($"PreferenceWeight: {preferenceWeight}");
+            //Console.WriteLine($"MutationFrequency: {mutationFrequency}");
+            //Console.WriteLine($"NumberOfParents: {numberOfParents}");
+            //Console.WriteLine($"ElitePercentage: 0.2");
+            //Console.WriteLine($"NumberOfWorkers: {numberOfWorkers}");
+            //Console.WriteLine($"DaysInWeek: {daysInWeek}");
+
+           
 
             var random = new Random();
-            var population = _populationService.GenerateInitialPopulation(populationSize, numberOfWorkers, daysInWeek);
+       
+            List<int[,]> population;
+            population = _population.GenerateInitialPopulation(populationSize, numberOfWorkers, daysInWeek);
             
             int generationsWithoutImprovement = 0;
-            const int maxStagnation = 100;
 
-            for (int generation = 0; generation < 1000; generation++)
+            for (int generation = 0; generation < maxGenerations; generation++)
             {
                 // Obliczanie fitness
-                var fitness = population.Select(schedule =>
-                    _fitnessService.CalculateFitness(schedule, employeePreferences, preferenceWeight)).ToArray();
-                
-                // Znajdź maksymalny fitness w obecnej generacji
+                var fitness = population.Select(schedule => _fitnessService.CalculateFitness(schedule, employeePreferences, scheduleParameters)).ToArray();
+
+
+                // Sprawdzenie poprawności tablicy fitness przed jej użyciem
+                if (fitness == null || fitness.Length == 0)
+                {
+                    throw new InvalidOperationException("Tablica fitness jest pusta lub null.");
+                }
+
+                // Znalezienie maksymalnego fitness w obecnej generacji
                 double currentBestFitness = fitness.Max();
-                
-                // Jeśli nowy maksymalny fitness jest lepszy niż dotychczasowy
+
+                // Jeśli nowy maksymalny fitness jest lepszy niż poprzedni
                 if (currentBestFitness > _bestFitness)
                 {
                     _bestFitness = currentBestFitness;
                     _bestSchedule = population[Array.IndexOf(fitness, currentBestFitness)];
-                    generationsWithoutImprovement = 0; // Reset stagnacji
+                    generationsWithoutImprovement = 0; // Reset licznika stagnacji
                 }
                 else
                 {
-                    generationsWithoutImprovement++; // Zwiększ licznik stagnacji
+                    generationsWithoutImprovement++; // Zwiększenie licznika stagnacji
                 }
                 
-                // Sprawdź warunek stagnacji
+                // Logowanie najlepszej wartości fitness oraz liczby wygenerowanych harmonogramów
+                Console.WriteLine($"Generacja {generation + 1}:");
+                Console.WriteLine($"  Najlepsza wartość fitness: {_bestFitness}");
+                Console.WriteLine($"  Liczba wygenerowanych harmonogramów: {population.Count}");
+                Console.WriteLine($"  Liczba osobników w populacji: {population.Count}");
+                Console.WriteLine($"  Liczba rodziców: {numberOfParents}");
+                Console.WriteLine($"  Liczba elitarnych osobników: {eliteCount}");
+
+                // Sprawdzenie warunku stagnacji
                 if (generationsWithoutImprovement >= maxStagnation)
                 {
                     Console.WriteLine($"Algorytm zatrzymany z powodu stagnacji po {generation} generacjach.");
                     break;
                 }
+                
 
-                // Aktualizacja najlepszego wyniku
-                for (int i = 0; i < fitness.Length; i++)
-                {
-                    if (fitness[i] > _bestFitness)
-                    {
-                        _bestFitness = fitness[i];
-                        _bestSchedule = population[i];
-                    }
-                }
-
-                // Jeśli znaleziono maksymalny fitness, zakończ pętlę
+                // Jeśli maksymalny fitness został znaleziony, zakończ pętlę
                 if (_bestFitness >= 1000.0)
                 {
                     break;
                 }
-                
-                // Sortowanie populacji według fitness (od najlepszego do najgorszego)
+
+                // Logowanie liczby osobników w populacji i liczby rodziców w każdej iteracji
+                //Console.WriteLine($"Generacja {generation + 1}:");
+
+                // Sortowanie populacji według fitness (od najwyższego do najniższego)
                 var sortedPopulation = population.Zip(fitness, (schedule, fit) => new { Schedule = schedule, Fitness = fit })
                     .OrderByDescending(x => x.Fitness)
                     .ToList();
-                
-                // Pobierz elitarne osobniki
+
+                // Pobranie elitarnych osobników
                 double fitnessThreshold = 0.8 * _bestFitness; // Próg fitness jako 80% najlepszego
                 var eliteIndividuals = sortedPopulation
                     .Where(x => x.Fitness >= fitnessThreshold)
                     .Select(x => x.Schedule)
                     .ToList();
-
                 
                 // Selekcja rodziców z reszty populacji
-                var parents = SelectParents(
-                    sortedPopulation.Skip(eliteCount).Select(x => x.Schedule).ToList(),
-                    sortedPopulation.Skip(eliteCount).Select(x => x.Fitness).ToArray(),
-                    optimizationType,
-                    random,
-                    generation / 100 + 2, // Liczba kandydatów zwiększana co 100 generacji
-                    mutationFrequency);
+                List<int[,]> parents;
 
-                // Krzyżowanie
-                var offspring = _crossoverService.PerformCrossover(parents, random, numberOfWorkers, daysInWeek);
+                // Selekcja rodziców z reszty populacji
+                    parents = SelectParents(
+                        sortedPopulation.Skip(eliteCount).Select(x => x.Schedule).ToList(),
+                        sortedPopulation.Skip(eliteCount).Select(x => x.Fitness).ToArray(),
+                        optimizationType, // Przekazanie odpowiedniego typu
+                        random,
+                        numberOfParents,
+                        mutationFrequency);
 
-                // Mutacja
+                // Wykonanie krzyżowania
+                var offspring = _crossoverService.PerformCrossover(parents, random, numberOfWorkers, daysInWeek, numberOfCrossoverPoints);
+
+                // Wykonanie mutacji
                 _mutationService.PerformMutation(offspring, random, numberOfWorkers, daysInWeek, mutationFrequency);
-                
-                // Dodaj elitarne osobniki do potomstwa
+
+                // Teraz zapewniamy, że liczba osobników w populacji nie przekroczy rozmiaru
+                // Populacja powinna składać się z elitarnych osobników i nowego pokolenia
                 offspring.AddRange(eliteIndividuals);
 
-                // Aktualizacja populacji
-                population = offspring;
+                // Upewnij się, że populacja nie przekroczy ustalonego rozmiaru
+                population = offspring.Take(populationSize).ToList();
             }
 
             return new ScheduleResult
@@ -158,12 +174,13 @@ namespace AG.Services
                 double minFitness = fitness.Min();
                 double threshold = maxFitness * 0.1; // Próg skalowania
 
+                // Normalizacja wartości fitness
                 for (int i = 0; i < fitness.Length; i++)
                 {
                     if (fitness[i] > threshold)
                         fitness[i] = (fitness[i] - threshold) / (maxFitness - threshold);
                     else
-                        fitness[i] = 0; // Ucinanie niskich wartości fitness
+                        fitness[i] = 0; // Przycina niskie wartości fitness
                 }
 
                 var slots = FillSlots(fitness);
@@ -199,8 +216,6 @@ namespace AG.Services
             return parents;
         }
 
-
-
         private double[] FillSlots(double[] fitness)
         {
             var slots = new double[fitness.Length + 1];
@@ -218,11 +233,15 @@ namespace AG.Services
             while (low < high)
             {
                 int mid = (low + high) / 2;
-                if (slots[mid] < point) low = mid + 1;
-                else high = mid;
+                if (slots[mid] < point) 
+                    low = mid + 1;
+                else 
+                    high = mid;
             }
-            return low - 1;
+            // Sprawdzenie, aby zwrócić poprawny indeks
+            return Math.Min(low, slots.Length - 1);
         }
+
 
         private enum OptimizationType
         {
