@@ -12,10 +12,14 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// Konfiguracja bazy danych w pamięci
+//Konfiguracja bazy danych
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseInMemoryDatabase("InMemoryDb")
+    options.UseMySql(
+        builder.Configuration.GetConnectionString("DefaultConnection"), 
+        new MySqlServerVersion(new Version(8, 3, 0)) // Wersja MySQL 8.0.0, dostosuj do swojej wersji
+    )
 );
+
 
 
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
